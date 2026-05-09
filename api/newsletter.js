@@ -3,8 +3,6 @@ import { rateLimitSupabase } from "./_rateLimit.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Rate limiter simple en mémoire (reset à chaque cold start, suffisant pour limiter les abus)
-const hits = new Map();
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 

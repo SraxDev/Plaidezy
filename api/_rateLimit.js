@@ -20,31 +20,25 @@ export async function rateLimitSupabase(key, max, windowMs = 60_000) {
   const now = new Date();
   const resetAt = new Date(now.getTime() + windowMs).toISOString();
 
+  // 1. Lire la ligne existante
   const { data, error } = await supabase
     .from("rate_limits")
-    .upsert(
-      { key, count: 1, reset_at: resetAt },
-      { onConflict: "key", ignoreDuplicates: false }
-    )
-    .select()
-    .single();
+    .select("count, reset_at")
+    .eq("key", key)
+    .maybeSingle();
 
-  // Si la ligne existait déjà et n'est pas expirée, on incrémente
-  if (error || !data) {
-    // Fallback : on laisse passer (fail open)
-    return false;
-  }
+  // Fallback : on laisse passer en cas d'erreur DB (fail open)
+  if (error) return false;
 
-  // Si la fenêtre est expirée, reset
-  if (new Date(data.reset_at) < now) {
+  // 2. Première requête ou fenêtre expirée → reset
+  if (!data || new Date(data.reset_at) < now) {
     await supabase
       .from("rate_limits")
-      .update({ count: 1, reset_at: resetAt })
-      .eq("key", key);
+      .upsert({ key, count: 1, reset_at: resetAt });
     return false;
   }
 
-  // Sinon incrémenter
+  // 3. Fenêtre active → incrémenter
   const newCount = data.count + 1;
   await supabase
     .from("rate_limits")

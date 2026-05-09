@@ -43,6 +43,9 @@ export default async function handler(req, res) {
     if (!response.ok)
       return res.status(response.status).json({ error: data.message || "Erreur SumUp" });
 
+    if (!data.hosted_checkout_url)
+      return res.status(500).json({ error: "SumUp n'a pas retourné l'URL de paiement. Vérifiez que le Hosted Checkout est activé sur votre compte marchand." });
+
     return res.json({
       checkoutId: data.id,
       checkoutReference: ref,
