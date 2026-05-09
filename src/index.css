@@ -665,6 +665,15 @@ input[type="number"] {
   background: rgba(14,14,22,0.98);
   border: 1px solid rgba(255,255,255,0.1);
   box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  max-height: calc(100dvh - 40px);
+  display: flex; flex-direction: column;
+}
+.modal-body {
+  padding: 56px 32px 36px;
+  position: relative; z-index: 2;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
 }
 .modal-close {
   position: absolute; top: 20px; right: 20px; z-index: 10;
@@ -677,7 +686,7 @@ input[type="number"] {
   -webkit-backdrop-filter: blur(12px);
 }
 .modal-close:hover { background: rgba(255,255,255,0.15); color: var(--ink); }
-.modal-body { padding: 56px 32px 36px; position: relative; z-index: 2; }
+
 
 .wizard-progress { display: flex; gap: 6px; margin-bottom: 32px; }
 .wizard-step-dot {
@@ -816,7 +825,7 @@ input[type="number"] {
   .nav-links { display: none; }
   .hamburger { display: flex; }
   .mobile-nav { display: block; }
-  .modal-body { padding: 28px 20px; }
+  .modal-body { padding: 52px 16px 24px; }
   .email-form { flex-direction: column; }
   .email-section { padding: 40px 24px; }
 }
