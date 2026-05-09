@@ -5,6 +5,7 @@ import LetterBuilder from "./components/LetterBuilder";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { MentionsLegales, CGV, Confidentialite } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
+import { usePaymentReturn } from "./hooks/usePaymentReturn";
 
 const STORAGE_KEY = "plaidezy_session";
 
@@ -475,9 +476,9 @@ function FooterSection() {
           <span className="footer-badge"><svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>Paiement sécurisé</span>
         </div>
         <div className="footer-socials">
-          <a href="#" className="footer-social-link" aria-label="Twitter / X"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg></a>
-          <a href="#" className="footer-social-link" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg></a>
-          <a href="#" className="footer-social-link" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg></a>
+          <a href="https://x.com/plaidezy" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Twitter / X"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg></a>
+          <a href="https://www.linkedin.com/company/plaidezy" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg></a>
+          <a href="https://www.instagram.com/plaidezy" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" /></svg></a>
         </div>
         <div className="footer-divider" />
         <ul className="footer-links">
@@ -522,14 +523,9 @@ function AppInner() {
 
   const handleEligible = useCallback((claim: ClaimConfig, answers: Record<string, string>) => {
     setSelectedClaim(claim);
-    setClaimAnswers(answers);
     const amount = claim.calculateAmount(answers);
     setClaimAmount(amount);
-
-    // Injecte le montant calculé dans les answers pour que generateLetter puisse l'utiliser
     const answersWithAmount = { ...answers, _calculatedAmount: amount };
-
-    // Sauvegarde la session avant d'ouvrir le paiement
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         claimId: claim.id,
@@ -538,7 +534,6 @@ function AppInner() {
         step: "payment",
       }));
     } catch { /* noop */ }
-
     setClaimAnswers(answersWithAmount);
     setPaymentOpen(true);
   }, []);
@@ -546,7 +541,6 @@ function AppInner() {
   const handlePaid = useCallback(() => {
     setPaymentOpen(false);
     setBuilderOpen(true);
-    // Marque la session comme payée
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         claimId: selectedClaim?.id,
@@ -566,65 +560,17 @@ function AppInner() {
     try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
   }, []);
 
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [paymentError, setPaymentError] = useState("");
+  // FIX: retour SumUp géré dans un hook dédié
+  const paymentReturn = usePaymentReturn();
 
-  // Détecte le retour après paiement SumUp
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const paymentSuccessParam = params.get("payment_success");
-
-    if (paymentSuccessParam) {
-      window.history.replaceState({}, "/", "/");
-
-      // Restaure la session
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const session = JSON.parse(saved);
-          const claim = claimTypes.find((c: ClaimConfig) => c.id === session.claimId);
-          if (claim && session.answers) {
-            setSelectedClaim(claim);
-            setClaimAnswers(session.answers);
-            setClaimAmount(session.amount || claim.calculateAmount(session.answers));
-
-            // Vérifie le paiement côté serveur
-            setPaymentSuccess(true);
-            const verifyTimeout = setTimeout(() => {
-              setPaymentSuccess(false);
-              setPaymentError("La vérification a expiré. Contactez support@plaidezy.com.");
-            }, 15000);
-            fetch("/api/verify-payment", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ reference: paymentSuccessParam }),
-            })
-              .then((r) => r.json())
-              .then((data) => {
-                clearTimeout(verifyTimeout);
-                if (data.verified) {
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                    ...session,
-                    step: "builder-unlocked",
-                  }));
-                  setPaymentSuccess(false);
-                  setBuilderOpen(true);
-                } else {
-                  setPaymentSuccess(false);
-                  setPaymentError(data.error || "Paiement non vérifié.");
-                }
-              })
-              .catch(() => {
-                clearTimeout(verifyTimeout);
-                setPaymentSuccess(false);
-                setPaymentError("Impossible de vérifier le paiement.");
-              });
-            return;
-          }
-        }
-      } catch { /* noop */ }
+    if (paymentReturn.verified && paymentReturn.claim) {
+      setSelectedClaim(paymentReturn.claim);
+      setClaimAnswers(paymentReturn.answers);
+      setClaimAmount(paymentReturn.amount);
+      setBuilderOpen(true);
     }
-  }, []);
+  }, [paymentReturn.verified, paymentReturn.claim, paymentReturn.answers, paymentReturn.amount]);
 
   useEffect(() => {
     document.body.style.overflow = wizardOpen || paymentOpen || builderOpen ? "hidden" : "";
@@ -681,19 +627,20 @@ function AppInner() {
       <FooterSection />
       </main>
       <MobileSticky onStart={openWizard} />
-      {/* Écran de confirmation après paiement SumUp */}
-      {paymentSuccess && (
+
+      {/* Vérification paiement en cours */}
+      {paymentReturn.verifying && (
         <div className="modal-backdrop" style={{ background: "rgba(6,6,10,0.97)" }} role="status" aria-live="polite" aria-label="Vérification du paiement en cours">
           <div style={{ textAlign: "center", maxWidth: 400, margin: "0 auto" }}>
             <div className="analysis-spinner" style={{ margin: "0 auto 24px", width: 28, height: 28 }} aria-hidden="true" />
             <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--ink)", marginBottom: 8, letterSpacing: -1 }}>Vérification du paiement…</h2>
-            <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7 }}>On confirme votre paiement auprès de SumUp.</p>
+            <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7 }}>Merci de patienter, on confirme votre paiement.</p>
           </div>
         </div>
       )}
 
       {/* Erreur de vérification paiement */}
-      {paymentError && (
+      {paymentReturn.error && (
         <div className="modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="pay-err-title" aria-live="assertive">
           <div className="modal-content liquid-glass-card" style={{ maxWidth: 480 }}>
             <div className="modal-body" style={{ textAlign: "center", padding: 48 }}>
@@ -701,8 +648,8 @@ function AppInner() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
               </div>
               <h2 id="pay-err-title" style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)", marginBottom: 8, letterSpacing: -0.5 }}>Paiement non vérifié</h2>
-              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 24 }}>{paymentError}</p>
-              <button type="button" className="wizard-btn-next" style={{ padding: "14px 28px" }} onClick={() => setPaymentError("")}>Fermer</button>
+              <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 24 }}>{paymentReturn.error}</p>
+              <button type="button" className="wizard-btn-next" style={{ padding: "14px 28px" }} onClick={paymentReturn.clearError}>Fermer</button>
             </div>
           </div>
         </div>

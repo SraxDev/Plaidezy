@@ -43,6 +43,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     } catch { /* noop */ }
     return true;
   });
+  const [error, setError] = useState("");
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -52,42 +53,11 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
 
   const isFormValid = personal.fullName.trim() && personal.address.trim() && personal.city.trim() && personal.email.trim();
 
-  const buildPrompt = () => {
-    const answersStr = claim.questions
-      .map((q) => `- ${q.label} : ${answers[q.id] || "non renseigné"}`)
-      .join("\n");
-
-    return `Tu es un assistant juridique français. Génère une lettre de réclamation/mise en demeure formelle et professionnelle.
-
-TYPE DE RÉCLAMATION : ${claim.name}
-CADRE JURIDIQUE : ${claim.law}
-
-INFORMATIONS DE L'EXPÉDITEUR :
-- Nom : ${personal.fullName}
-- Adresse : ${personal.address}
-- Ville : ${personal.city}
-- Email : ${personal.email}
-
-DÉTAILS DU DOSSIER :
-${answersStr}
-
-CONSIGNES :
-- Rédige une lettre formelle complète (expéditeur, destinataire, date du jour, objet, corps, formule de politesse, signature)
-- Cite les articles de loi précis applicables (${claim.law})
-- Inclus le montant exact réclamé
-- Fixe un délai de réponse de 30 jours
-- Mentionne qu'à défaut de réponse, une action en justice sera engagée
-- Le ton doit être ferme mais professionnel
-- Rédige UNIQUEMENT la lettre, sans commentaires ni explications
-- N'utilise PAS de markdown, juste du texte brut`;
-  };
-
   const generateWithAI = async () => {
     setGenerating(true);
     setError("");
     setLetterText("");
 
-    // Récupère la référence de paiement depuis la session
     let paymentReference = "";
     try {
       const saved = localStorage.getItem("plaidezy_session");
@@ -101,7 +71,12 @@ CONSIGNES :
       const res = await fetch("/api/generate-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: buildPrompt(), paymentReference }),
+        body: JSON.stringify({
+          claimId: claim.id,
+          answers,
+          personal,
+          paymentReference,
+        }),
       });
 
       const data = await res.json();

@@ -8,6 +8,8 @@ interface WizardModalProps {
   initialClaimId?: string | null;
 }
 
+function GlassShine() { return <div className="glass-shine" />; }
+
 export default function WizardModal({ onClose, onEligible, initialClaimId }: WizardModalProps) {
   const initialClaim = initialClaimId ? claimTypes.find((c) => c.id === initialClaimId) || null : null;
   const [step, setStep] = useState(initialClaim ? 1 : 0);
@@ -26,23 +28,34 @@ export default function WizardModal({ onClose, onEligible, initialClaimId }: Wiz
   }, [isDirty, onClose]);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") { if (confirmClose) setConfirmClose(false); else tryClose(); } };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { if (confirmClose) setConfirmClose(false); else tryClose(); }
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [tryClose, confirmClose]);
 
-  const handleBackdrop = (e: React.MouseEvent) => { if (e.target === backdropRef.current) tryClose(); };
+  const handleBackdrop = (e: React.MouseEvent) => {
+    if (e.target === backdropRef.current) tryClose();
+  };
 
-  const setAnswer = (id: string, value: string) => { setAnswers((prev) => ({ ...prev, [id]: value })); };
+  const setAnswer = (id: string, value: string) => {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  };
 
-  const runAnalysis = () => {
-    setStep(2);
+  // FIX: les timeouts sont maintenant nettoyés si le modal ferme pendant l'analyse
+  useEffect(() => {
+    if (step !== 2) return;
     setAnalysisProgress(0);
     const timeouts: ReturnType<typeof setTimeout>[] = [];
-    [400, 1100, 1800, 2600].forEach((delay, i) => { timeouts.push(setTimeout(() => setAnalysisProgress(i + 1), delay)); });
+    [400, 1100, 1800, 2600].forEach((delay, i) => {
+      timeouts.push(setTimeout(() => setAnalysisProgress(i + 1), delay));
+    });
     timeouts.push(setTimeout(() => setStep(3), 3200));
     return () => timeouts.forEach(clearTimeout);
-  };
+  }, [step]);
+
+  const runAnalysis = () => setStep(2);
 
   const selectedQuestions: Question[] = selectedClaim?.questions || [];
   const isFormValid = selectedQuestions.filter((q) => q.required).every((q) => answers[q.id]?.trim());
@@ -51,7 +64,6 @@ export default function WizardModal({ onClose, onEligible, initialClaimId }: Wiz
   return (
     <div className="modal-backdrop" ref={backdropRef} onClick={handleBackdrop} role="dialog" aria-modal="true" aria-label="Vérification de droit">
 
-      {/* Confirm close overlay */}
       {confirmClose && (
         <div ref={confirmRef} style={{ position: "fixed", inset: 0, zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "rgba(6,6,10,0.7)" }} role="alertdialog" aria-modal="true" aria-label="Confirmer la fermeture">
           <div className="liquid-glass-card" style={{ borderRadius: 20, padding: "36px 32px", maxWidth: 380, textAlign: "center", position: "relative" }}>
@@ -161,16 +173,22 @@ export default function WizardModal({ onClose, onEligible, initialClaimId }: Wiz
                   : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 }
               </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: eligibility.eligible ? "var(--green)" : "var(--accent)", marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" as const }}>{eligibility.eligible ? "Vous êtes éligible !" : "Non éligible"}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: eligibility.eligible ? "var(--green)" : "var(--accent)", marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" as const }}>
+                {eligibility.eligible ? "Vous êtes éligible !" : "Non éligible"}
+              </div>
               <div className="result-amount">{selectedClaim.calculateAmount({ ...answers, _calculatedAmount: selectedClaim.calculateAmount(answers) })}</div>
               <div style={{ marginBottom: 20 }}>
                 <span className="result-law"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>{selectedClaim.law}</span>
               </div>
               <div className="result-desc">{selectedClaim.lawDesc}</div>
               {eligibility.eligible ? (
-                <button type="button" className="wizard-btn-next" style={{ width: "100%", fontSize: 15, padding: "16px 28px" }} onClick={() => { onEligible(selectedClaim, answers); onClose(); }}>Générer ma lettre — 9€</button>
+                <button type="button" className="wizard-btn-next" style={{ width: "100%", fontSize: 15, padding: "16px 28px" }} onClick={() => { onEligible(selectedClaim, answers); onClose(); }}>
+                  Générer ma lettre — 9€
+                </button>
               ) : (
-                <div style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 16 }}>{eligibility.reason || "Les conditions ne sont pas remplies pour ce type de réclamation."}</div>
+                <div style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 16 }}>
+                  {eligibility.reason || "Les conditions ne sont pas remplies pour ce type de réclamation."}
+                </div>
               )}
               <div style={{ marginTop: 12, fontSize: 12, color: "var(--light)" }}>{eligibility.eligible ? "Satisfait ou remboursé 7 jours" : ""}</div>
               <div style={{ marginTop: 16, textAlign: "center" }}>
@@ -183,5 +201,3 @@ export default function WizardModal({ onClose, onEligible, initialClaimId }: Wiz
     </div>
   );
 }
-
-function GlassShine() { return <div className="glass-shine" />; }

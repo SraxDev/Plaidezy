@@ -1,21 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
-
-// Rate limiter simple
-const hits = new Map();
-function rateLimit(ip, max = 30, windowMs = 60_000) {
-  const now = Date.now();
-  const rec = hits.get(ip) || { count: 0, resetAt: now + windowMs };
-  if (now > rec.resetAt) { rec.count = 0; rec.resetAt = now + windowMs; }
-  rec.count++;
-  hits.set(ip, rec);
-  return rec.count > max;
-}
+import { rateLimitSupabase } from "./_rateLimit.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || "unknown";
-  if (rateLimit(ip)) return res.status(429).json({ error: "Trop de requêtes." });
+  if (await rateLimitSupabase(`verify-payment:${ip}`, 20, 60_000)) return res.status(429).json({ error: "Trop de requêtes." });
 
   const SUMUP_KEY = process.env.SUMUP_API_KEY;
 
