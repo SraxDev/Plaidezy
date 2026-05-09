@@ -431,7 +431,7 @@ function EmailSection() {
         <div className="section-h2" style={{ textAlign: "center", marginBottom: 8 }}>De nouveaux cas<br /><em>arrivent bientôt.</em></div>
         <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7, maxWidth: 420, margin: "0 auto" }}>Abonnement piège, frais bancaires abusifs, assurance refuse de payer… Inscrivez-vous pour être notifié dès qu'un nouveau cas de réclamation est disponible.</p>
         {!submitted ? (
-          <form className="email-form" onSubmit={handleSubmit}><input type="email" className="email-input" placeholder="votre@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={submitting} autoComplete="email" inputMode="email" /><button type="submit" className="email-btn" disabled={submitting}>{submitting ? "…" : "M'inscrire"}</button></form>
+          <form className="email-form" onSubmit={handleSubmit}><input id="newsletter-email" name="email" type="email" className="email-input" placeholder="votre@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={submitting} autoComplete="email" inputMode="email" /><button type="submit" className="email-btn" disabled={submitting}>{submitting ? "…" : "M'inscrire"}</button></form>
         ) : (
           <div className="email-success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>Vous serez notifié des nouveaux cas !</div>
         )}
@@ -708,7 +708,7 @@ function AppInner() {
         </div>
       )}
 
-      {wizardOpen && <WizardModal onClose={closeWizard} onEligible={handleEligible} initialClaimId={preselectedClaimId} />}
+      {wizardOpen && <WizardModal key={preselectedClaimId ?? "open"} onClose={closeWizard} onEligible={handleEligible} initialClaimId={preselectedClaimId} />}
       {paymentOpen && selectedClaim && <PaymentGate claim={selectedClaim} amount={claimAmount} onPaid={handlePaid} onClose={closePayment} />}
       {builderOpen && selectedClaim && <LetterBuilder claim={selectedClaim} answers={claimAnswers} onClose={closeBuilder} />}
     </>
