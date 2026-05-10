@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import type { ClaimConfig } from "../lib/claims";
 
@@ -19,6 +19,9 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplying, setPromoApplying] = useState(false);
+  const [promoError, setPromoError] = useState("");
 
   useEffect(() => {
     fetch("/api/config")
@@ -33,18 +36,43 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
       });
   }, []);
 
-  // Sauvegarde les données du dossier dans localStorage avant de quitter la page
-  const saveClaimData = () => {
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoApplying(true);
+    setPromoError("");
+
     try {
-      const claimData = {
-        claimId: claim.id,
-        amount: amount,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem("plaidezy_pending_claim", JSON.stringify(claimData));
-      // Sauvegarde aussi les answers et personal dans des clés séparées
-      // (on les mettra depuis App.tsx avant d'ouvrir PaymentGate)
-    } catch { /* noop */ }
+      // On vérifie le code promo via generate-letter avec des données minimales
+      // Le vrai appel sera fait dans LetterBuilder — ici on vérifie juste la validité
+      const res = await fetch("/api/verify-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        setPromoError(data.error || "Code promo invalide.");
+        return;
+      }
+
+      // Sauvegarde le code promo dans la session
+      try {
+        const existing = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
+        localStorage.setItem("plaidezy_session", JSON.stringify({
+          ...existing,
+          promoCode: promoCode.trim(),
+          step: "promo-validated",
+        }));
+      } catch { /* noop */ }
+
+      onPaid();
+    } catch (e: unknown) {
+      setPromoError(e instanceof Error ? e.message : "Erreur lors de la vérification");
+    } finally {
+      setPromoApplying(false);
+    }
   };
 
   const handlePay = async () => {
@@ -55,19 +83,13 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          claimId: claim.id,
-          amount: 9.0,
-        }),
+        body: JSON.stringify({ claimId: claim.id, amount: 9.0 }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Erreur lors de la création du paiement");
-      }
+      if (!res.ok) throw new Error(data.error || "Erreur lors de la création du paiement");
 
-      // Sauvegarde checkoutRef dans la session principale (lue par LetterBuilder après retour SumUp)
       try {
         const existing = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
         localStorage.setItem("plaidezy_session", JSON.stringify({
@@ -77,7 +99,6 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
         }));
       } catch { /* noop */ }
 
-      // Redirige vers la page de paiement SumUp
       window.location.href = data.hostedCheckoutUrl;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors de la création du paiement");
@@ -167,14 +188,57 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
             ))}
           </div>
 
-          {/* Erreur */}
+          {/* Champ code promo */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="wizard-input"
+                type="text"
+                placeholder="Code promo"
+                value={promoCode}
+                onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); }}
+                style={{ padding: "11px 14px", borderRadius: 10, flex: 1, fontSize: 13, letterSpacing: 1 }}
+              />
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                disabled={!promoCode.trim() || promoApplying}
+                style={{
+                  padding: "11px 16px",
+                  borderRadius: 10,
+                  background: "rgba(82,183,136,0.15)",
+                  border: "1px solid rgba(82,183,136,0.3)",
+                  color: "var(--green)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  fontFamily: "'Bricolage Grotesque', sans-serif",
+                }}
+              >
+                {promoApplying ? "…" : "Appliquer"}
+              </button>
+            </div>
+            {promoError && (
+              <div style={{ fontSize: 12, color: "var(--accent)", marginTop: 6 }}>{promoError}</div>
+            )}
+          </div>
+
+          {/* Séparateur */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+            <span style={{ fontSize: 11, color: "var(--light)" }}>ou</span>
+            <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+          </div>
+
+          {/* Erreur paiement */}
           {error && (
             <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(231,111,81,0.1)", border: "1px solid rgba(231,111,81,0.2)", fontSize: 13, color: "var(--accent)", marginBottom: 16 }}>
               {error}
             </div>
           )}
 
-          {/* Bouton payer → redirige vers SumUp */}
+          {/* Bouton payer */}
           <button type="button"
             className="wizard-btn-next"
             style={{ width: "100%", fontSize: 15, padding: "16px 28px" }}
