@@ -1,7 +1,6 @@
 /**
- * Hook qui détecte le retour depuis SumUp après paiement,
+ * Hook qui détecte le retour depuis Gumroad après paiement,
  * restaure la session depuis localStorage, et vérifie le paiement côté serveur.
- * Extrait de App.tsx pour alléger le composant et faciliter les tests.
  */
 import { useEffect, useState } from "react";
 import { claimTypes, type ClaimConfig } from "../lib/claims";
@@ -29,8 +28,8 @@ export function usePaymentReturn() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const reference = params.get("payment_success");
-    if (!reference) return;
+    const saleId = params.get("sale_id");
+    if (!saleId) return;
 
     // Nettoie l'URL immédiatement
     window.history.replaceState({}, "/", "/");
@@ -70,13 +69,12 @@ export function usePaymentReturn() {
     fetch("/api/verify-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
+      body: JSON.stringify({ saleId }),
     })
       .then((r) => r.json())
       .then((data) => {
         clearTimeout(timeout);
         if (data.verified) {
-          // Marque la session comme débloquée
           try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...session, step: "builder-unlocked" }));
           } catch { /* noop */ }
