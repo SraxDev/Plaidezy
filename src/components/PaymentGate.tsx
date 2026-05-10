@@ -15,7 +15,7 @@ interface PaymentGateProps {
 
 export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentGateProps) {
   const trapRef = useFocusTrap<HTMLDivElement>(true);
-  const [hasGumroad, setHasGumroad] = useState(false);
+  const [hasSumUp, setHasSumUp] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
@@ -27,11 +27,11 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
     fetch("/api/config")
       .then((r) => r.json())
       .then((data) => {
-        setHasGumroad(data.hasGumroad);
+        setHasSumUp(data.hasSumUp);
         setLoading(false);
       })
       .catch(() => {
-        setHasGumroad(false);
+        setHasSumUp(false);
         setLoading(false);
       });
   }, []);
@@ -42,6 +42,8 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
     setPromoError("");
 
     try {
+      // On vérifie le code promo via generate-letter avec des données minimales
+      // Le vrai appel sera fait dans LetterBuilder — ici on vérifie juste la validité
       const res = await fetch("/api/verify-promo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,6 +57,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
         return;
       }
 
+      // Sauvegarde le code promo dans la session
       try {
         const existing = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
         localStorage.setItem("plaidezy_session", JSON.stringify({
@@ -80,7 +83,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ claimId: claim.id }),
+        body: JSON.stringify({ claimId: claim.id, amount: 9.0 }),
       });
 
       const data = await res.json();
@@ -91,12 +94,12 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
         const existing = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
         localStorage.setItem("plaidezy_session", JSON.stringify({
           ...existing,
-          claimId: claim.id,
+          checkoutRef: data.checkoutReference,
           step: "payment",
         }));
       } catch { /* noop */ }
 
-      window.location.href = data.gumroadUrl;
+      window.location.href = data.hostedCheckoutUrl;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors de la création du paiement");
       setCreating(false);
@@ -115,8 +118,8 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
     );
   }
 
-  // Mode dev sans Gumroad → bypass
-  if (!hasGumroad) {
+  // Mode dev sans SumUp → bypass
+  if (!hasSumUp) {
     return (
       <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Paiement">
         <div className="modal-content liquid-glass-card" ref={trapRef} style={{ maxWidth: 520 }}>
@@ -126,7 +129,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           </button>
           <div className="modal-body">
             <div className="wizard-title">Accès au générateur</div>
-            <div className="wizard-subtitle">Mode développement — Gumroad n'est pas configuré.</div>
+            <div className="wizard-subtitle">Mode développement — SumUp n'est pas configuré.</div>
             <div style={{ padding: 16, borderRadius: 12, background: "rgba(82,183,136,0.08)", border: "1px solid rgba(82,183,136,0.15)", marginBottom: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{claim.name}</span>
@@ -144,7 +147,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
     );
   }
 
-  // Mode production avec Gumroad
+  // Mode production avec SumUp
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Paiement">
       <div className="modal-content liquid-glass-card" ref={trapRef} style={{ maxWidth: 520 }}>
@@ -244,7 +247,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           >
             {creating ? (
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <div className="analysis-spinner" /> Redirection vers Gumroad…
+                <div className="analysis-spinner" /> Création du paiement…
               </span>
             ) : (
               "Payer 9€ — Carte bancaire"
@@ -252,7 +255,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           </button>
 
           <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: "var(--light)" }}>
-            Paiement sécurisé via Gumroad · CB, PayPal
+            Paiement sécurisé via SumUp · CB, Apple Pay, Google Pay
           </div>
         </div>
       </div>
