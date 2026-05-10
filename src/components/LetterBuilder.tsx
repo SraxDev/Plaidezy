@@ -62,24 +62,26 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     setError("");
     setLetterText("");
 
-    let paymentReference = "";
-    try {
-      const saved = localStorage.getItem("plaidezy_session");
-      if (saved) {
-        const session = JSON.parse(saved);
-        paymentReference = session.checkoutRef || "";
-      }
-    } catch { /* noop */ }
+let paymentReference = "";
+let savedPromoCode = "";
+try {
+  const saved = localStorage.getItem("plaidezy_session");
+  if (saved) {
+    const session = JSON.parse(saved);
+    paymentReference = session.checkoutRef || "";
+    savedPromoCode = session.promoCode || "";
+  }
+} catch { /* noop */ }
 
-    try {
-      const body: Record<string, unknown> = {
-        claimId: claim.id,
-        answers,
-        personal,
-        paymentReference,
-      };
+const body: Record<string, unknown> = {
+  claimId: claim.id,
+  answers,
+  personal,
+  paymentReference,
+};
 
-      if (promoCodeOverride) body.promoCode = promoCodeOverride;
+const activePromo = promoCodeOverride || savedPromoCode;
+if (activePromo) body.promoCode = activePromo;
 
       const res = await fetch("/api/generate-letter", {
         method: "POST",
