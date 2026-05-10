@@ -73,6 +73,25 @@ export const claimTypes: ClaimConfig[] = [
       ]},
     ],
     checkEligibility: (a) => {
+      // Date du vol obligatoire et cohérente
+      if (!a.date_vol) return { eligible: false, reason: "Indiquez la date du vol." };
+      const dateVol = new Date(a.date_vol);
+      const now = new Date();
+      if (dateVol > now) return { eligible: false, reason: "La date du vol ne peut pas être dans le futur." };
+      const joursEcoules = Math.floor((now.getTime() - dateVol.getTime()) / (1000 * 60 * 60 * 24));
+      if (joursEcoules > 1095) return { eligible: false, reason: "Le délai de réclamation est de 3 ans. Ce vol date de plus de 3 ans — le délai est malheureusement dépassé." };
+
+      // Numéro de vol : format basique (2 lettres + chiffres)
+      if (!a.numero_vol || a.numero_vol.trim().length < 4 || !/[A-Za-z]{1,3}\d{1,4}/.test(a.numero_vol)) {
+        return { eligible: false, reason: "Le numéro de vol semble invalide (ex: AF1234, FR5678)." };
+      }
+
+      // Compagnie non vide et pas du charabia (au moins 2 caractères)
+      if (!a.compagnie || a.compagnie.trim().length < 2) {
+        return { eligible: false, reason: "Indiquez le nom de la compagnie aérienne." };
+      }
+
+      if (!a.type_incident) return { eligible: false, reason: "Sélectionnez un type d'incident." };
       if (a.type_incident === "annulation" || a.type_incident === "surbooking") return { eligible: true };
       if (a.type_incident === "retard" && a.duree_retard) return { eligible: true };
       if (a.type_incident === "retard" && !a.duree_retard) return { eligible: false, reason: "Le retard doit être d'au moins 3 heures à l'arrivée pour être éligible." };
@@ -149,7 +168,40 @@ ${p.fullName}`;
       ]},
       { id: "details", label: "Précisez les faits", type: "textarea", placeholder: "Décrivez la situation...", required: true },
     ],
-    checkEligibility: () => ({ eligible: true }),
+    checkEligibility: (a) => {
+      // Date PV obligatoire
+      if (!a.date_pv) return { eligible: false, reason: "Indiquez la date du PV." };
+      const datePv = new Date(a.date_pv);
+      const now = new Date();
+      if (datePv > now) return { eligible: false, reason: "La date du PV ne peut pas être dans le futur." };
+      const joursEcoules = Math.floor((now.getTime() - datePv.getTime()) / (1000 * 60 * 60 * 24));
+      if (joursEcoules > 45) {
+        return { eligible: false, reason: `Le délai légal de contestation est de 45 jours. Votre PV date de ${joursEcoules} jours — le délai est malheureusement dépassé.` };
+      }
+
+      // Numéro PV : au moins 5 caractères
+      if (!a.numero_pv || a.numero_pv.trim().length < 5) {
+        return { eligible: false, reason: "Indiquez le numéro de PV complet (visible sur l'avis de contravention)." };
+      }
+
+      // Lieu non vide et pas du charabia
+      if (!a.lieu || a.lieu.trim().length < 5) {
+        return { eligible: false, reason: "Indiquez le lieu de l'infraction (rue, ville)." };
+      }
+
+      // Montant amende : doit contenir un chiffre
+      if (!a.montant_amende || !/\d/.test(a.montant_amende)) {
+        return { eligible: false, reason: "Indiquez le montant de l'amende." };
+      }
+
+      if (!a.motif) {
+        return { eligible: false, reason: "Sélectionnez un motif de contestation valable." };
+      }
+      if (!a.details || a.details.trim().length < 20) {
+        return { eligible: false, reason: "Décrivez les faits avec plus de précision (au moins 20 caractères) pour constituer un dossier solide." };
+      }
+      return { eligible: true };
+    },
     calculateAmount: (a) => `Annulation de l'amende (${a.montant_amende || "?"})`,
     law: "Code de la route · Art. L121-3 & L224-1",
     lawDesc: "Toute amende forfaitaire peut être contestée dans les 45 jours suivant la verbalisation. Les motifs de contestation sont encadrés par le Code de la route et le Code de procédure pénale.",
@@ -219,7 +271,45 @@ ${p.fullName}`;
       { id: "valeur", label: "Valeur du contenu (€)", type: "number", placeholder: "Ex: 75", required: true },
       { id: "description", label: "Description du contenu", type: "text", placeholder: "Ex: Vêtements, livre, électronique…", required: true },
     ],
-    checkEligibility: () => ({ eligible: true }),
+    checkEligibility: (a) => {
+      // Date envoi obligatoire
+      if (!a.date_envoi) return { eligible: false, reason: "Indiquez la date d'envoi du colis." };
+      const dateEnvoi = new Date(a.date_envoi);
+      const now = new Date();
+      if (dateEnvoi > now) return { eligible: false, reason: "La date d'envoi ne peut pas être dans le futur." };
+      const joursEcoules = Math.floor((now.getTime() - dateEnvoi.getTime()) / (1000 * 60 * 60 * 24));
+      if (joursEcoules > 365) {
+        return { eligible: false, reason: "Le délai de réclamation est d'un an à compter de la date d'envoi. Ce délai est malheureusement dépassé." };
+      }
+      if (joursEcoules < 3) {
+        return { eligible: false, reason: "Le colis vient d'être expédié. Attendez au moins 3 jours ouvrés avant de déclarer un problème." };
+      }
+
+      // Numéro de suivi : au moins 8 caractères alphanumériques
+      if (!a.numero_suivi || a.numero_suivi.trim().length < 8 || !/^[a-zA-Z0-9]+$/.test(a.numero_suivi.trim())) {
+        return { eligible: false, reason: "Le numéro de suivi semble invalide. Il doit contenir au moins 8 caractères alphanumériques." };
+      }
+
+      if (!a.type_probleme) {
+        return { eligible: false, reason: "Sélectionnez le type de problème rencontré." };
+      }
+
+      // Valeur réaliste : entre 1€ et 5000€
+      const valeur = parseFloat(a.valeur);
+      if (!a.valeur || isNaN(valeur) || valeur <= 0) {
+        return { eligible: false, reason: "Indiquez la valeur du contenu du colis." };
+      }
+      if (valeur > 5000) {
+        return { eligible: false, reason: "La valeur déclarée semble très élevée. Les transporteurs standard plafonnent leur responsabilité. Pour des colis de grande valeur, contactez directement un avocat." };
+      }
+
+      // Description pas du charabia (au moins 3 caractères distincts)
+      if (!a.description || a.description.trim().length < 3) {
+        return { eligible: false, reason: "Décrivez le contenu du colis (ex: vêtements, livre, téléphone…)." };
+      }
+
+      return { eligible: true };
+    },
     calculateAmount: (a) => `${a.valeur || "?"} € (valeur déclarée) + frais de port`,
     law: "Code de la consommation · Art. L221-3 & L224-60",
     lawDesc: "Le transporteur est responsable de la perte ou de la détérioration du colis pendant le transport. Vous avez droit au remboursement du produit et des frais de port.",
@@ -290,9 +380,32 @@ ${p.fullName}`;
       { id: "prix_billet", label: "Prix du billet (€)", type: "number", placeholder: "Ex: 89", required: true },
     ],
     checkEligibility: (a) => {
-      if (a.retard === "30" && a.compagnie?.includes("SNCF")) {
-        return { eligible: true, reason: "La garantie G30 s'applique pour les retards de plus de 30 minutes sur les trains SNCF." };
+      // Date trajet obligatoire et pas dans le futur
+      if (!a.date_trajet) return { eligible: false, reason: "Indiquez la date du trajet." };
+      const dateTrajet = new Date(a.date_trajet);
+      const now = new Date();
+      if (dateTrajet > now) return { eligible: false, reason: "La date du trajet ne peut pas être dans le futur." };
+      const joursEcoules = Math.floor((now.getTime() - dateTrajet.getTime()) / (1000 * 60 * 60 * 24));
+      if (joursEcoules > 365) {
+        return { eligible: false, reason: "Le délai de réclamation est d'un an. Ce trajet date de plus d'un an — le délai est malheureusement dépassé." };
       }
+
+      // Numéro de train : au moins 4 caractères
+      if (!a.numero_train || a.numero_train.trim().length < 4) {
+        return { eligible: false, reason: "Indiquez le numéro de train (ex: TGV 8542, visible sur votre billet)." };
+      }
+
+      // Prix billet : entre 1€ et 1000€
+      const prix = parseFloat(a.prix_billet);
+      if (!a.prix_billet || isNaN(prix) || prix <= 0) {
+        return { eligible: false, reason: "Indiquez le prix de votre billet." };
+      }
+      if (prix > 1000) {
+        return { eligible: false, reason: "Le prix du billet semble incorrect. Vérifiez le montant (valeur par billet, hors réservations groupées)." };
+      }
+
+      if (!a.retard) return { eligible: false, reason: "Indiquez la durée du retard." };
+
       return { eligible: true };
     },
     calculateAmount: (a) => {
@@ -358,7 +471,48 @@ ${p.fullName}`;
         { value: "non_fait", label: "Pas d'état des lieux de sortie effectué" },
       ]},
     ],
-    checkEligibility: () => ({ eligible: true }),
+    checkEligibility: (a) => {
+      // Dates obligatoires
+      if (!a.date_entree) return { eligible: false, reason: "Indiquez la date d'entrée dans le logement." };
+      if (!a.date_sortie) return { eligible: false, reason: "Indiquez la date de sortie du logement." };
+
+      const dateEntree = new Date(a.date_entree);
+      const dateSortie = new Date(a.date_sortie);
+      const now = new Date();
+
+      if (dateSortie > now) return { eligible: false, reason: "La date de sortie ne peut pas être dans le futur." };
+      if (dateSortie <= dateEntree) return { eligible: false, reason: "La date de sortie doit être postérieure à la date d'entrée." };
+
+      // Bail trop court (moins de 7 jours) = probablement une erreur
+      const dureeJours = Math.floor((dateSortie.getTime() - dateEntree.getTime()) / (1000 * 60 * 60 * 24));
+      if (dureeJours < 7) return { eligible: false, reason: "La durée du bail semble incorrecte. Vérifiez les dates d'entrée et de sortie." };
+
+      // Délai légal pas encore écoulé
+      const joursDepuisSortie = Math.floor((now.getTime() - dateSortie.getTime()) / (1000 * 60 * 60 * 24));
+      const delaiLegal = a.etat_lieux === "conforme" ? 30 : 60;
+      if (joursDepuisSortie < delaiLegal) {
+        return { eligible: false, reason: `Le propriétaire dispose de ${delaiLegal} jours pour restituer la caution. Il reste encore ${delaiLegal - joursDepuisSortie} jour(s). Revenez si le délai n'est pas respecté.` };
+      }
+
+      // Montant réaliste
+      const montant = parseFloat(a.montant_caution);
+      if (!a.montant_caution || isNaN(montant) || montant <= 0) {
+        return { eligible: false, reason: "Indiquez le montant du dépôt de garantie versé." };
+      }
+      if (montant > 20000) {
+        return { eligible: false, reason: "Le montant de la caution semble très élevé. Vérifiez le montant (en euros)." };
+      }
+
+      // Nom bailleur et adresse pas du charabia
+      if (!a.nom_bailleur || a.nom_bailleur.trim().length < 3) {
+        return { eligible: false, reason: "Indiquez le nom complet du propriétaire." };
+      }
+      if (!a.adresse_logement || a.adresse_logement.trim().length < 10) {
+        return { eligible: false, reason: "Indiquez l'adresse complète du logement." };
+      }
+
+      return { eligible: true };
+    },
     calculateAmount: (a) => {
       const caution = parseFloat(a.montant_caution) || 0;
       const sortie = new Date(a.date_sortie);

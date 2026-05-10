@@ -2,14 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import WizardModal from "./components/WizardModal";
 import PaymentGate from "./components/PaymentGate";
 import LetterBuilder from "./components/LetterBuilder";
+import PaymentSuccess from "./components/PaymentSuccess";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { MentionsLegales, CGV, Confidentialite } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
 import { usePaymentReturn } from "./hooks/usePaymentReturn";
 
 const STORAGE_KEY = "plaidezy_session";
-
-/* ───────── helpers ───────── */
 
 const scrollTo = (id: string) => {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -52,8 +51,6 @@ function SvgDefs() {
   );
 }
 
-/* ───────── Navigation ───────── */
-
 function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -89,8 +86,6 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
     </>
   );
 }
-
-/* ───────── Hero ───────── */
 
 function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
   const items = [
@@ -156,14 +151,8 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
   );
 }
 
-/* ───────── Services ───────── */
-
 const serviceToClaim: Record<string, string> = {
-  plane: "vol",
-  parking: "parking",
-  package: "colis",
-  train: "train",
-  home: "caution",
+  plane: "vol", parking: "parking", package: "colis", train: "train", home: "caution",
 };
 
 function ServicesSection({ onSelectService }: { onSelectService: (claimId: string) => void }) {
@@ -184,12 +173,7 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
       </div>
       <div className="services-grid">
         {services.map((s, i) => (
-          <div
-            key={i}
-            className={`service-card ${s.locked ? "locked" : "liquid-glass-card"} reveal reveal-delay-${(i % 3) + 1}`}
-            onClick={() => { if (!s.locked && serviceToClaim[s.icon]) onSelectService(serviceToClaim[s.icon]); }}
-            style={!s.locked ? { cursor: "pointer" } : {}}
-          >
+          <div key={i} className={`service-card ${s.locked ? "locked" : "liquid-glass-card"} reveal reveal-delay-${(i % 3) + 1}`} onClick={() => { if (!s.locked && serviceToClaim[s.icon]) onSelectService(serviceToClaim[s.icon]); }} style={!s.locked ? { cursor: "pointer" } : {}}>
             {!s.locked && <GlassShine />}
             <div className="sc-top">
               <div className={`sc-icon ${s.color}`}><svg stroke={s.color === "green" ? "var(--green)" : "var(--accent)"} fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><use href={`#icon-${s.icon}`} /></svg></div>
@@ -200,9 +184,7 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
             {!s.locked && (
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <div className="sc-gain"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="var(--green)"><polyline points="20 6 9 17 4 12" /></svg>{s.gain}</div>
-                <div style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--green)", display: "flex", alignItems: "center", gap: 4 }}>
-                  Vérifier <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                </div>
+                <div style={{ marginLeft: "auto", fontSize: 12, fontWeight: 700, color: "var(--green)", display: "flex", alignItems: "center", gap: 4 }}>Vérifier <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg></div>
               </div>
             )}
           </div>
@@ -211,8 +193,6 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
     </section>
   );
 }
-
-/* ───────── Versus ───────── */
 
 function VersusSection() {
   const rows: { label: string; plaidezy: boolean | string; avocat: boolean | string; legaltech: boolean | string | null }[] = [
@@ -239,10 +219,7 @@ function VersusSection() {
         <div className="versus-table liquid-glass-card reveal">
           <GlassShine />
           <div className="vt-header">
-            <div className="vth" />
-            <div className="vth us">✦ Plaidezy<span className="versus-badge">Meilleur choix</span></div>
-            <div className="vth">Avocat</div>
-            <div className="vth">LegalTech</div>
+            <div className="vth" /><div className="vth us">✦ Plaidezy<span className="versus-badge">Meilleur choix</span></div><div className="vth">Avocat</div><div className="vth">LegalTech</div>
           </div>
           {rows.map((row, i) => (
             <div className="vt-row" key={i}>
@@ -257,8 +234,6 @@ function VersusSection() {
     </section>
   );
 }
-
-/* ───────── How It Works ───────── */
 
 function HowItWorksSection() {
   const steps = [
@@ -289,8 +264,6 @@ function HowItWorksSection() {
     </section>
   );
 }
-
-/* ───────── Letter Preview ───────── */
 
 function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
   const checkItems = ["Articles de loi exacts (numéro, alinéa)", "Délai de réponse imposé à l'entreprise", "Montant précis réclamé selon votre cas", "Ton juridique qui force la prise au sérieux", "PDF professionnel prêt à envoyer"];
@@ -342,8 +315,6 @@ function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
   );
 }
 
-/* ───────── Guarantees ───────── */
-
 function GuaranteesSection() {
   const cards = [
     { icon: "refund", title: "Satisfait ou remboursé", text: "Si vous n'êtes pas satisfait de votre lettre, on vous rembourse les 9€ — sans question, dans les 7 jours.", featured: true },
@@ -369,8 +340,6 @@ function GuaranteesSection() {
     </section>
   );
 }
-
-/* ───────── FAQ ───────── */
 
 function FAQSection() {
   const faqs = [
@@ -399,8 +368,6 @@ function FAQSection() {
   );
 }
 
-/* ───────── Email ───────── */
-
 function EmailSection() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -412,18 +379,10 @@ function EmailSection() {
     setSubmitting(true);
     setError(false);
     try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      const res = await fetch("/api/newsletter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       if (!res.ok) throw new Error("fail");
       setSubmitted(true);
-    } catch {
-      setError(true);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setError(true); } finally { setSubmitting(false); }
   };
   return (
     <section className="email-section" id="newsletter">
@@ -442,8 +401,6 @@ function EmailSection() {
   );
 }
 
-/* ───────── CTA ───────── */
-
 function CTASection({ onStart }: { onStart: () => void }) {
   return (
     <div className="cta-wrap" id="cta">
@@ -461,8 +418,6 @@ function CTASection({ onStart }: { onStart: () => void }) {
     </div>
   );
 }
-
-/* ───────── Footer ───────── */
 
 function FooterSection() {
   return (
@@ -491,8 +446,6 @@ function FooterSection() {
   );
 }
 
-/* ───────── Mobile Sticky ───────── */
-
 function MobileSticky({ onStart }: { onStart: () => void }) {
   return (
     <div className="mobile-sticky liquid-glass-nav">
@@ -502,23 +455,18 @@ function MobileSticky({ onStart }: { onStart: () => void }) {
   );
 }
 
-/* ───────── App ───────── */
-
 function AppInner() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<ClaimConfig | null>(null);
   const [claimAnswers, setClaimAnswers] = useState<Record<string, string>>({});
   const [claimAmount, setClaimAmount] = useState("");
-
   const [preselectedClaimId, setPreselectedClaimId] = useState<string | null>(null);
-  const openWizard = useCallback(() => { setPreselectedClaimId(null); setWizardOpen(true); }, []);
 
-  const openWizardWithClaim = useCallback((claimId: string) => {
-    setPreselectedClaimId(claimId);
-    setWizardOpen(true);
-  }, []);
+  const openWizard = useCallback(() => { setPreselectedClaimId(null); setWizardOpen(true); }, []);
+  const openWizardWithClaim = useCallback((claimId: string) => { setPreselectedClaimId(claimId); setWizardOpen(true); }, []);
   const closeWizard = useCallback(() => setWizardOpen(false), []);
 
   const handleEligible = useCallback((claim: ClaimConfig, answers: Record<string, string>) => {
@@ -527,57 +475,40 @@ function AppInner() {
     setClaimAmount(amount);
     const answersWithAmount = { ...answers, _calculatedAmount: amount };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        claimId: claim.id,
-        answers: answersWithAmount,
-        amount,
-        step: "payment",
-      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ claimId: claim.id, answers: answersWithAmount, amount, step: "payment" }));
     } catch { /* noop */ }
     setClaimAnswers(answersWithAmount);
     setPaymentOpen(true);
   }, []);
 
-const handlePaid = useCallback(() => {
+  const handlePaid = useCallback(() => {
     setPaymentOpen(false);
     setBuilderOpen(true);
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        ...existing,
-        claimId: selectedClaim?.id,
-        answers: claimAnswers,
-        amount: claimAmount,
-        step: "builder",
-      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, claimId: selectedClaim?.id, answers: claimAnswers, amount: claimAmount, step: "builder" }));
     } catch { /* noop */ }
   }, [selectedClaim, claimAnswers, claimAmount]);
 
-  const closePayment = useCallback(() => {
-    setPaymentOpen(false);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
-  }, []);
-  const closeBuilder = useCallback(() => {
-    setBuilderOpen(false);
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ }
-  }, []);
+  const closePayment = useCallback(() => { setPaymentOpen(false); try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ } }, []);
+  const closeBuilder = useCallback(() => { setBuilderOpen(false); try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ } }, []);
 
-  // FIX: retour SumUp géré dans un hook dédié
   const paymentReturn = usePaymentReturn();
 
+  // Retour SumUp → page de succès d'abord
   useEffect(() => {
     if (paymentReturn.verified && paymentReturn.claim) {
       setSelectedClaim(paymentReturn.claim);
       setClaimAnswers(paymentReturn.answers);
       setClaimAmount(paymentReturn.amount);
-      setBuilderOpen(true);
+      setSuccessOpen(true); // page succès avant builder
     }
   }, [paymentReturn.verified, paymentReturn.claim, paymentReturn.answers, paymentReturn.amount]);
 
   useEffect(() => {
-    document.body.style.overflow = wizardOpen || paymentOpen || builderOpen ? "hidden" : "";
+    document.body.style.overflow = wizardOpen || paymentOpen || builderOpen || successOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [wizardOpen, paymentOpen, builderOpen]);
+  }, [wizardOpen, paymentOpen, builderOpen, successOpen]);
 
   useEffect(() => {
     const revealAll = () => {
@@ -593,7 +524,6 @@ const handlePaid = useCallback(() => {
     return () => { observer.disconnect(); window.removeEventListener("scroll", revealAll); };
   }, []);
 
-  // Routeur basé sur le hash (#mentions-legales, #cgv, #confidentialite)
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
     const handler = () => setHash(window.location.hash);
@@ -610,38 +540,43 @@ const handlePaid = useCallback(() => {
       <SvgDefs />
       <Navigation onOpenWizard={openWizard} />
       <main>
-      <HeroSection onOpenWizard={openWizard} />
-      <div className="section-divider" />
-      <ServicesSection onSelectService={openWizardWithClaim} />
-      <div className="section-divider" />
-      <VersusSection />
-      <div className="section-divider" />
-      <HowItWorksSection />
-      <div className="section-divider" />
-      <LetterPreviewSection onOpenWizard={openWizard} />
-      <div className="section-divider" />
-      <GuaranteesSection />
-      <div className="section-divider" />
-      <FAQSection />
-      <div className="section-divider" />
-      <EmailSection />
-      <CTASection onStart={openWizard} />
-      <FooterSection />
+        <HeroSection onOpenWizard={openWizard} />
+        <div className="section-divider" />
+        <ServicesSection onSelectService={openWizardWithClaim} />
+        <div className="section-divider" />
+        <VersusSection />
+        <div className="section-divider" />
+        <HowItWorksSection />
+        <div className="section-divider" />
+        <LetterPreviewSection onOpenWizard={openWizard} />
+        <div className="section-divider" />
+        <GuaranteesSection />
+        <div className="section-divider" />
+        <FAQSection />
+        <div className="section-divider" />
+        <EmailSection />
+        <CTASection onStart={openWizard} />
+        <FooterSection />
       </main>
       <MobileSticky onStart={openWizard} />
 
-      {/* Vérification paiement en cours */}
+      {/* Vérification paiement */}
       {paymentReturn.verifying && (
-        <div className="modal-backdrop" style={{ background: "rgba(6,6,10,0.97)" }} role="status" aria-live="polite" aria-label="Vérification du paiement en cours">
+        <div className="modal-backdrop" style={{ background: "rgba(6,6,10,0.97)" }} role="status">
           <div style={{ textAlign: "center", maxWidth: 400, margin: "0 auto" }}>
-            <div className="analysis-spinner" style={{ margin: "0 auto 24px", width: 28, height: 28 }} aria-hidden="true" />
+            <div className="analysis-spinner" style={{ margin: "0 auto 24px", width: 28, height: 28 }} />
             <h2 style={{ fontSize: 24, fontWeight: 800, color: "var(--ink)", marginBottom: 8, letterSpacing: -1 }}>Vérification du paiement…</h2>
             <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.7 }}>Merci de patienter, on confirme votre paiement.</p>
           </div>
         </div>
       )}
 
-      {/* Erreur de vérification paiement */}
+      {/* Page de succès après paiement SumUp — mode dev: toujours visible */}
+      {successOpen && !builderOpen && (
+        <PaymentSuccess onContinue={() => { setSuccessOpen(false); setBuilderOpen(true); }} />
+      )}
+
+      {/* Erreur paiement */}
       {paymentReturn.error && (
         <div className="modal-backdrop" role="alertdialog" aria-modal="true" aria-labelledby="pay-err-title" aria-live="assertive">
           <div className="modal-content liquid-glass-card" style={{ maxWidth: 480 }}>
