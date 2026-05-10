@@ -50,12 +50,31 @@ CONSIGNES :
 - N'utilise PAS de markdown, juste du texte brut`;
 }
 
+async function verifyPromoCode(supabase, code) {
+  const { data, error } = await supabase
+    .from("promo_codes")
+    .select("id, uses_left")
+    .eq("code", code.toUpperCase().trim())
+    .maybeSingle();
+
+  if (error || !data) return { valid: false, reason: "Code promo invalide." };
+  if (data.uses_left <= 0) return { valid: false, reason: "Ce code promo a déjà été utilisé." };
+
+  return { valid: true, id: data.id, uses_left: data.uses_left };
+}
+
+async function consumePromoCode(supabase, id, uses_left) {
+  await supabase
+    .from("promo_codes")
+    .update({ uses_left: uses_left - 1 })
+    .eq("id", id);
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || "unknown";
 
-  // Rate limiter persistant (10 req/min/IP) — survit aux cold starts Vercel
   const limited = await rateLimitSupabase(`generate:${ip}`, 10, 60_000);
   if (limited) return res.status(429).json({ error: "Trop de requêtes. Réessayez dans une minute." });
 
@@ -64,7 +83,7 @@ export default async function handler(req, res) {
 
   if (!GEMINI_KEY) return res.status(500).json({ error: "GEMINI_API_KEY non configurée." });
 
-  const { claimId, answers, personal, paymentReference } = req.body || {};
+  const { claimId, answers, personal, paymentReference, promoCode } = req.body || {};
 
   if (!claimId || !VALID_CLAIM_IDS.includes(claimId))
     return res.status(400).json({ error: "Type de réclamation invalide." });
@@ -82,27 +101,35 @@ export default async function handler(req, res) {
 
   // Vérification paiement (ignorée en mode dev sans SumUp)
   if (SUMUP_KEY) {
-    if (!paymentReference || typeof paymentReference !== "string")
-      return res.status(403).json({ error: "Paiement requis." });
-
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    const { data: payment } = await supabase
-      .from("payments")
-      .select("id, used")
-      .eq("reference", paymentReference)
-      .maybeSingle();
+    // Code promo → bypass paiement
+    if (promoCode && typeof promoCode === "string") {
+      const promo = await verifyPromoCode(supabase, promoCode);
+      if (!promo.valid) return res.status(403).json({ error: promo.reason });
+      await consumePromoCode(supabase, promo.id, promo.uses_left);
+    } else {
+      // Vérification paiement SumUp classique
+      if (!paymentReference || typeof paymentReference !== "string")
+        return res.status(403).json({ error: "Paiement requis." });
 
-    if (!payment)
-      return res.status(403).json({ error: "Paiement non vérifié." });
+      const { data: payment } = await supabase
+        .from("payments")
+        .select("id, used")
+        .eq("reference", paymentReference)
+        .maybeSingle();
 
-    if (payment.used)
-      return res.status(403).json({ error: "Cette référence de paiement a déjà été utilisée." });
+      if (!payment)
+        return res.status(403).json({ error: "Paiement non vérifié." });
 
-    await supabase.from("payments").update({ used: true }).eq("reference", paymentReference);
+      if (payment.used)
+        return res.status(403).json({ error: "Cette référence de paiement a déjà été utilisée." });
+
+      await supabase.from("payments").update({ used: true }).eq("reference", paymentReference);
+    }
   }
 
   const prompt = buildPrompt(claimId, answers, personal);

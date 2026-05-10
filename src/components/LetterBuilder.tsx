@@ -33,7 +33,6 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   });
 
   const [locked, setLocked] = useState(() => {
-    // déverrouillé seulement si le step est "builder-unlocked" ET qu'une lettre est déjà sauvegardée
     try {
       const saved = localStorage.getItem("plaidezy_session");
       if (saved) {
@@ -43,17 +42,22 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     } catch { /* noop */ }
     return true;
   });
+
   const [error, setError] = useState("");
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplying, setPromoApplying] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [promoSuccess, setPromoSuccess] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const trapRef = useFocusTrap<HTMLDivElement>(true);
 
   const isFormValid = personal.fullName.trim() && personal.address.trim() && personal.city.trim() && personal.email.trim();
 
-  const generateWithAI = async () => {
+  const generateWithAI = async (promoCodeOverride?: string) => {
     setGenerating(true);
     setError("");
     setLetterText("");
@@ -68,29 +72,36 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     } catch { /* noop */ }
 
     try {
+      const body: Record<string, unknown> = {
+        claimId: claim.id,
+        answers,
+        personal,
+        paymentReference,
+      };
+
+      if (promoCodeOverride) body.promoCode = promoCodeOverride;
+
       const res = await fetch("/api/generate-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          claimId: claim.id,
-          answers,
-          personal,
-          paymentReference,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || `Erreur ${res.status}`);
-      }
-
+      if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
       if (!data.letter) throw new Error("Réponse vide du serveur");
+
       setLetterText(data.letter);
-      // Persiste la lettre dans la session pour survie au rechargement
+      setLocked(false);
+
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({
+          ...saved,
+          letterText: data.letter,
+          step: "builder-unlocked",
+        }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors de la génération");
@@ -99,12 +110,57 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     }
   };
 
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoApplying(true);
+    setPromoError("");
+    setPromoSuccess(false);
+
+    try {
+      const res = await fetch("/api/generate-letter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          claimId: claim.id,
+          answers,
+          personal,
+          promoCode: promoCode.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPromoError(data.error || "Code promo invalide.");
+        return;
+      }
+
+      if (!data.letter) throw new Error("Réponse vide du serveur");
+
+      setPromoSuccess(true);
+      setLetterText(data.letter);
+      setLocked(false);
+
+      try {
+        const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
+        localStorage.setItem("plaidezy_session", JSON.stringify({
+          ...saved,
+          letterText: data.letter,
+          step: "builder-unlocked",
+        }));
+      } catch { /* noop */ }
+    } catch (e: unknown) {
+      setPromoError(e instanceof Error ? e.message : "Erreur lors de la vérification");
+    } finally {
+      setPromoApplying(false);
+    }
+  };
+
   const handlePay = async () => {
     setPaying(true);
     setPayError("");
 
     try {
-      // Crée le checkout SumUp
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,11 +169,8 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Erreur lors de la création du paiement");
-      }
+      if (!res.ok) throw new Error(data.error || "Erreur lors de la création du paiement");
 
-      // Sauvegarde la session + la lettre dans localStorage
       try {
         localStorage.setItem("plaidezy_session", JSON.stringify({
           claimId: claim.id,
@@ -130,7 +183,6 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
         }));
       } catch { /* noop */ }
 
-      // Redirige vers SumUp
       window.location.href = data.hostedCheckoutUrl;
     } catch (e: unknown) {
       setPayError(e instanceof Error ? e.message : "Erreur lors du paiement");
@@ -256,7 +308,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
               className="wizard-btn-next"
               style={{ width: "100%", fontSize: 15, padding: "16px 28px", marginBottom: 20 }}
               disabled={!isFormValid || generating}
-              onClick={generateWithAI}
+              onClick={() => generateWithAI()}
             >
               {generating ? (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
@@ -330,14 +382,60 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
                     Débloquez-la pour la lire en entier et télécharger le PDF.
                   </div>
 
+                  {/* Champ code promo */}
+                  <div style={{ width: "100%", maxWidth: 320, marginBottom: 12 }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        className="wizard-input"
+                        type="text"
+                        placeholder="Code promo"
+                        value={promoCode}
+                        onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); setPromoSuccess(false); }}
+                        style={{ padding: "11px 14px", borderRadius: 10, flex: 1, fontSize: 13, letterSpacing: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        disabled={!promoCode.trim() || promoApplying || !isFormValid}
+                        style={{
+                          padding: "11px 16px",
+                          borderRadius: 10,
+                          background: "rgba(82,183,136,0.15)",
+                          border: "1px solid rgba(82,183,136,0.3)",
+                          color: "var(--green)",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          fontFamily: "'Bricolage Grotesque', sans-serif",
+                        }}
+                      >
+                        {promoApplying ? "…" : "Appliquer"}
+                      </button>
+                    </div>
+                    {promoError && (
+                      <div style={{ fontSize: 12, color: "var(--accent)", marginTop: 6 }}>{promoError}</div>
+                    )}
+                    {promoSuccess && (
+                      <div style={{ fontSize: 12, color: "var(--green)", marginTop: 6 }}>✓ Code appliqué — lettre débloquée !</div>
+                    )}
+                  </div>
+
+                  {/* Séparateur */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", maxWidth: 320, marginBottom: 12 }}>
+                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                    <span style={{ fontSize: 11, color: "var(--light)" }}>ou</span>
+                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                  </div>
+
                   {/* Erreur paiement */}
                   {payError && (
-                    <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(231,111,81,0.1)", border: "1px solid rgba(231,111,81,0.15)", fontSize: 12, color: "var(--accent)", marginBottom: 12, maxWidth: 300, textAlign: "center" }}>
+                    <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(231,111,81,0.1)", border: "1px solid rgba(231,111,81,0.15)", fontSize: 12, color: "var(--accent)", marginBottom: 12, maxWidth: 320, textAlign: "center" }}>
                       {payError}
                     </div>
                   )}
 
-                  {/* Boutons */}
+                  {/* Bouton paiement */}
                   <button type="button"
                     className="wizard-btn-next"
                     style={{ width: "100%", maxWidth: 320, fontSize: 15, padding: "16px 28px" }}
@@ -353,22 +451,24 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
                     )}
                   </button>
 
-                  {/* Mode dev bypass — hidden in production */}
-                  {!import.meta.env.PROD && <button
-                    onClick={handleDevUnlock}
-                    style={{
-                      marginTop: 10,
-                      background: "none",
-                      border: "none",
-                      color: "var(--light)",
-                      fontSize: 12,
-                      cursor: "pointer",
-                      fontFamily: "'Bricolage Grotesque', sans-serif",
-                      textDecoration: "underline",
-                    }}
-                  >
-                    Mode dev : débloquer sans payer
-                  </button>}
+                  {/* Mode dev bypass */}
+                  {!import.meta.env.PROD && (
+                    <button
+                      onClick={handleDevUnlock}
+                      style={{
+                        marginTop: 10,
+                        background: "none",
+                        border: "none",
+                        color: "var(--light)",
+                        fontSize: 12,
+                        cursor: "pointer",
+                        fontFamily: "'Bricolage Grotesque', sans-serif",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Mode dev : débloquer sans payer
+                    </button>
+                  )}
 
                   <div style={{ fontSize: 11, color: "var(--light)", marginTop: 8, textAlign: "center" }}>
                     Paiement sécurisé · CB, Apple Pay, Google Pay
