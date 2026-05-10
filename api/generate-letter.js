@@ -75,7 +75,7 @@ export default async function handler(req, res) {
 
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || "unknown";
 
-  const limited = await rateLimitSupabase(`generate:${ip}`, 10, 60_000);
+  const limited = await rateLimitSupabase(`generate:${ip}`, 30, 60_000);
   if (limited) return res.status(429).json({ error: "Trop de requêtes. Réessayez dans une minute." });
 
   const GROQ_KEY = process.env.GROQ_API_KEY;
