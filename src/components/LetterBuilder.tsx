@@ -62,27 +62,28 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     setError("");
     setLetterText("");
 
-let paymentReference = "";
-let savedPromoCode = "";
-try {
-  const saved = localStorage.getItem("plaidezy_session");
-  if (saved) {
-    const session = JSON.parse(saved);
-    paymentReference = session.checkoutRef || "";
-    savedPromoCode = session.promoCode || "";
-  }
-} catch { /* noop */ }
+    let paymentReference = "";
+    let savedPromoCode = "";
+    try {
+      const saved = localStorage.getItem("plaidezy_session");
+      if (saved) {
+        const session = JSON.parse(saved);
+        paymentReference = session.checkoutRef || "";
+        savedPromoCode = session.promoCode || "";
+      }
+    } catch { /* noop */ }
 
-const body: Record<string, unknown> = {
-  claimId: claim.id,
-  answers,
-  personal,
-  paymentReference,
-};
+    const body: Record<string, unknown> = {
+      claimId: claim.id,
+      answers,
+      personal,
+      paymentReference,
+    };
 
-const activePromo = promoCodeOverride || savedPromoCode;
-if (activePromo) body.promoCode = activePromo;
+    const activePromo = promoCodeOverride || savedPromoCode;
+    if (activePromo) body.promoCode = activePromo;
 
+    try {
       const res = await fetch("/api/generate-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -192,9 +193,7 @@ if (activePromo) body.promoCode = activePromo;
     }
   };
 
-  const handleDevUnlock = () => {
-    setLocked(false);
-  };
+  const handleDevUnlock = () => setLocked(false);
 
   const handleDownload = () => {
     if (!letterText) return;
@@ -357,7 +356,6 @@ if (activePromo) body.promoCode = activePromo;
                 {letterText}
               </div>
 
-              {/* Overlay verrouillé */}
               {locked && (
                 <div style={{
                   position: "absolute",
@@ -430,14 +428,12 @@ if (activePromo) body.promoCode = activePromo;
                     <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
                   </div>
 
-                  {/* Erreur paiement */}
                   {payError && (
                     <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(231,111,81,0.1)", border: "1px solid rgba(231,111,81,0.15)", fontSize: 12, color: "var(--accent)", marginBottom: 12, maxWidth: 320, textAlign: "center" }}>
                       {payError}
                     </div>
                   )}
 
-                  {/* Bouton paiement */}
                   <button type="button"
                     className="wizard-btn-next"
                     style={{ width: "100%", maxWidth: 320, fontSize: 15, padding: "16px 28px" }}
@@ -448,26 +444,11 @@ if (activePromo) body.promoCode = activePromo;
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         <div className="analysis-spinner" /> Redirection vers le paiement…
                       </span>
-                    ) : (
-                      "Débloquer ma lettre — 9€"
-                    )}
+                    ) : "Débloquer ma lettre — 9€"}
                   </button>
 
-                  {/* Mode dev bypass */}
                   {!import.meta.env.PROD && (
-                    <button
-                      onClick={handleDevUnlock}
-                      style={{
-                        marginTop: 10,
-                        background: "none",
-                        border: "none",
-                        color: "var(--light)",
-                        fontSize: 12,
-                        cursor: "pointer",
-                        fontFamily: "'Bricolage Grotesque', sans-serif",
-                        textDecoration: "underline",
-                      }}
-                    >
+                    <button onClick={handleDevUnlock} style={{ marginTop: 10, background: "none", border: "none", color: "var(--light)", fontSize: 12, cursor: "pointer", fontFamily: "'Bricolage Grotesque', sans-serif", textDecoration: "underline" }}>
                       Mode dev : débloquer sans payer
                     </button>
                   )}
@@ -480,23 +461,15 @@ if (activePromo) body.promoCode = activePromo;
             </div>
           )}
 
-          {/* Télécharger (uniquement si déverrouillé) */}
           {letterText && !locked && (
             <div style={{ display: "flex", gap: 10 }}>
               <button type="button" className="wizard-btn-back" onClick={onClose}>Fermer</button>
-              <button type="button"
-                className="wizard-btn-next"
-                style={{ flex: 1 }}
-                disabled={downloading}
-                onClick={handleDownload}
-              >
+              <button type="button" className="wizard-btn-next" style={{ flex: 1 }} disabled={downloading} onClick={handleDownload}>
                 {downloading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                     <div className="analysis-spinner" /> PDF…
                   </span>
-                ) : (
-                  <>Télécharger le PDF</>
-                )}
+                ) : <>Télécharger le PDF</>}
               </button>
             </div>
           )}
