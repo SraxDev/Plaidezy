@@ -78,10 +78,10 @@ export default async function handler(req, res) {
   const limited = await rateLimitSupabase(`generate:${ip}`, 10, 60_000);
   if (limited) return res.status(429).json({ error: "Trop de requêtes. Réessayez dans une minute." });
 
-  const GEMINI_KEY = process.env.GEMINI_API_KEY;
+  const GROQ_KEY = process.env.GROQ_API_KEY;
   const SUMUP_KEY = process.env.SUMUP_API_KEY;
 
-  if (!GEMINI_KEY) return res.status(500).json({ error: "GEMINI_API_KEY non configurée." });
+  if (!GROQ_KEY) return res.status(500).json({ error: "GROQ_API_KEY non configurée." });
 
   const { claimId, answers, personal, paymentReference, promoCode } = req.body || {};
 
@@ -99,20 +99,17 @@ export default async function handler(req, res) {
   if (!EMAIL_RE.test(personal.email))
     return res.status(400).json({ error: "Email invalide." });
 
-  // Vérification paiement (ignorée en mode dev sans SumUp)
   if (SUMUP_KEY) {
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Code promo → bypass paiement
     if (promoCode && typeof promoCode === "string") {
       const promo = await verifyPromoCode(supabase, promoCode);
       if (!promo.valid) return res.status(403).json({ error: promo.reason });
       await consumePromoCode(supabase, promo.id, promo.uses_left);
     } else {
-      // Vérification paiement SumUp classique
       if (!paymentReference || typeof paymentReference !== "string")
         return res.status(403).json({ error: "Paiement requis." });
 
@@ -135,28 +132,30 @@ export default async function handler(req, res) {
   const prompt = buildPrompt(claimId, answers, personal);
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2000 },
-        }),
-      }
-    );
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${GROQ_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.3,
+        max_tokens: 2000,
+      }),
+    });
 
     const data = await response.json();
     if (!response.ok)
-      return res.status(response.status).json({ error: data.error?.message || "Erreur Gemini" });
+      return res.status(response.status).json({ error: data.error?.message || "Erreur Groq" });
 
-    const letter = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const letter = data.choices?.[0]?.message?.content || "";
     if (!letter.trim()) return res.status(500).json({ error: "Réponse vide de l'IA." });
 
     return res.json({ letter: letter.trim() });
   } catch (err) {
-    console.error("Gemini error:", err);
+    console.error("Groq error:", err);
     return res.status(500).json({ error: "Erreur serveur." });
   }
 }
