@@ -538,11 +538,13 @@ function AppInner() {
     setPaymentOpen(true);
   }, []);
 
-  const handlePaid = useCallback(() => {
+const handlePaid = useCallback(() => {
     setPaymentOpen(false);
     setBuilderOpen(true);
     try {
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...existing,
         claimId: selectedClaim?.id,
         answers: claimAnswers,
         amount: claimAmount,
