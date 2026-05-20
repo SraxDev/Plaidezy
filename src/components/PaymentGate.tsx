@@ -42,8 +42,6 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
     setPromoError("");
 
     try {
-      // On vérifie le code promo via generate-letter avec des données minimales
-      // Le vrai appel sera fait dans LetterBuilder — ici on vérifie juste la validité
       const res = await fetch("/api/verify-promo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,7 +55,6 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
         return;
       }
 
-      // Sauvegarde le code promo dans la session
       try {
         const existing = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
         localStorage.setItem("plaidezy_session", JSON.stringify({
@@ -118,7 +115,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
     );
   }
 
-  // Mode dev sans SumUp → bypass
+  // Mode dev sans SumUp → affichage dégradé avec message clair
   if (!hasSumUp) {
     return (
       <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Paiement">
@@ -128,8 +125,10 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>
           <div className="modal-body">
-            <div className="wizard-title">Accès au générateur</div>
-            <div className="wizard-subtitle">Mode développement — SumUp n'est pas configuré.</div>
+            <div className="wizard-title">Service temporairement indisponible</div>
+            <div className="wizard-subtitle" style={{ marginBottom: 20 }}>
+              Le paiement en ligne est momentanément indisponible. Contactez-nous pour finaliser votre demande.
+            </div>
             <div style={{ padding: 16, borderRadius: 12, background: "rgba(82,183,136,0.08)", border: "1px solid rgba(82,183,136,0.15)", marginBottom: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{claim.name}</span>
@@ -138,9 +137,16 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
               <div style={{ fontSize: 12, color: "var(--muted)" }}>{claim.law.split("·")[0].trim()}</div>
               <div style={{ fontSize: 12, color: "var(--green)", fontWeight: 700, marginTop: 6 }}>{amount}</div>
             </div>
-            <button type="button" className="wizard-btn-next" style={{ width: "100%", fontSize: 15, padding: "16px 28px" }} onClick={onPaid}>
-              Continuer (mode dev) →
-            </button>
+            <a
+              href="mailto:contact@plaidezy.com?subject=Réclamation%20-%20Paiement"
+              className="wizard-btn-next"
+              style={{ width: "100%", fontSize: 15, padding: "16px 28px", display: "block", textAlign: "center", textDecoration: "none" }}
+            >
+              Nous contacter par email →
+            </a>
+            <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: "var(--light)" }}>
+              contact@plaidezy.com · Réponse sous 24h
+            </div>
           </div>
         </div>
       </div>
@@ -156,9 +162,9 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
         <div className="modal-body">
-          <div className="wizard-title">Débloquez votre lettre</div>
+          <div className="wizard-title">Générer ma lettre juridique</div>
           <div className="wizard-subtitle">
-            La vérification est gratuite. La génération de la lettre personnalisée coûte 9€ fixe.
+            9€ fixe · Aucune commission sur votre indemnisation
           </div>
 
           {/* Résumé */}
@@ -194,7 +200,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
               <input
                 className="wizard-input"
                 type="text"
-                placeholder="Code promo"
+                placeholder="Code promo (optionnel)"
                 value={promoCode}
                 onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); }}
                 style={{ padding: "11px 14px", borderRadius: 10, flex: 1, fontSize: 13, letterSpacing: 1 }}
@@ -227,7 +233,7 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           {/* Séparateur */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-            <span style={{ fontSize: 11, color: "var(--light)" }}>ou</span>
+            <span style={{ fontSize: 11, color: "var(--light)" }}>ou payer par carte</span>
             <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
           </div>
 
@@ -239,7 +245,8 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           )}
 
           {/* Bouton payer */}
-          <button type="button"
+          <button
+            type="button"
             className="wizard-btn-next"
             style={{ width: "100%", fontSize: 15, padding: "16px 28px" }}
             disabled={creating}
@@ -247,15 +254,15 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           >
             {creating ? (
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <div className="analysis-spinner" /> Création du paiement…
+                <div className="analysis-spinner" /> Redirection vers le paiement…
               </span>
             ) : (
-              "Payer 9€ — Carte bancaire"
+              "Payer 9€ — CB · Apple Pay · Google Pay"
             )}
           </button>
 
           <div style={{ textAlign: "center", marginTop: 12, fontSize: 11, color: "var(--light)" }}>
-            Paiement sécurisé via SumUp · CB, Apple Pay, Google Pay
+            Paiement sécurisé via SumUp · Satisfait ou remboursé 7 jours
           </div>
         </div>
       </div>

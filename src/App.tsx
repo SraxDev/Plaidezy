@@ -93,7 +93,6 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
     { icon: "parking", name: "Amende de stationnement", desc: "Recours administratif", badge: "Disponible", live: true },
     { icon: "package", name: "Colis perdu ou endommagé", desc: "Colissimo, Mondial Relay…", badge: "Disponible", live: true },
     { icon: "home", name: "Caution non rendue", desc: "Mise en demeure propriétaire", badge: "Disponible", live: true },
-    { icon: "card", name: "Abonnement piège", desc: "Résiliation forcée", badge: "Bientôt", live: false },
   ];
   return (
     <section className="hero" id="main-content" style={{ position: "relative" }}>
@@ -112,7 +111,7 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
         <div className="hero-actions">
           <button type="button" className="btn-primary" onClick={onOpenWizard}>
             <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
-            Vérifier mon droit gratuitement
+            Générer ma lettre — 9€ fixe
           </button>
           <button type="button" className="btn-outline" onClick={() => scrollTo("services")}>Voir les cas</button>
         </div>
@@ -162,7 +161,6 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
     { icon: "package", color: "green", status: "live", locked: false, statusLabel: "Disponible", title: "Colis perdu ou endommagé", desc: "Colissimo, Mondial Relay, DPD… Si votre colis est perdu ou abîmé, vous avez des droits stricts. Attention : le délai légal peut être aussi court que 3 jours.", gain: "Remboursement intégral" },
     { icon: "train", color: "green", status: "live", locked: false, statusLabel: "Disponible", title: "Retard SNCF / Eurostar", desc: "Un retard de plus de 30 minutes vous donne droit à une indemnisation G30. La SNCF ne vous le dira pas spontanément. Plaidezy rédige la demande avec les bons articles.", gain: "25% à 75% du billet remboursé" },
     { icon: "home", color: "green", status: "live", locked: false, statusLabel: "Disponible", title: "Dépôt de garantie non rendu", desc: "Votre propriétaire garde votre caution sans justification ? Il encourt des majorations financières. Plaidezy rédige la mise en demeure avec les articles exacts.", gain: "Caution + majorations légales" },
-    { icon: "card", color: "orange", status: "bientot", locked: true, statusLabel: "Bientôt", title: "Abonnement piège", desc: "Salle de sport, streaming, appli… Un abonnement impossible à résilier ou des prélèvements après résiliation ? Plaidezy génère la mise en demeure qui bloque tout.", gain: "Remboursement des prélèvements" },
   ];
   return (
     <section className="services-section" id="services">
@@ -411,7 +409,7 @@ function CTASection({ onStart }: { onStart: () => void }) {
           <p>Vérification gratuite. Payez 9€ uniquement si vous êtes éligible et que vous lancez votre réclamation.</p>
         </div>
         <div className="cta-right">
-          <button type="button" className="btn-cta" onClick={onStart}>Vérifier mon droit gratuitement</button>
+          <button type="button" className="btn-cta" onClick={onStart}>Générer ma lettre — 9€ fixe</button>
           <div className="cta-micro">9€ fixe · Zéro commission · Satisfait ou remboursé 7j</div>
         </div>
       </div>
@@ -450,7 +448,7 @@ function MobileSticky({ onStart }: { onStart: () => void }) {
   return (
     <div className="mobile-sticky liquid-glass-nav">
       <GlassShine />
-      <button type="button" onClick={onStart}>Vérifier mon droit gratuitement</button>
+      <button type="button" onClick={onStart}>Générer ma lettre — 9€ fixe</button>
     </div>
   );
 }
