@@ -78,6 +78,52 @@ const linkStyle: React.CSSProperties = {
 };
 const strongStyle: React.CSSProperties = { fontWeight: 600, color: "var(--ink)" };
 
+
+function AProposContent() {
+  return (
+    <div>
+      <h1 style={{
+        fontFamily: "'Playfair Display', serif",
+        fontSize: 32, fontWeight: 700, color: "var(--ink)",
+        marginBottom: 6, letterSpacing: -1,
+      }}>
+        À propos de Plaidezy
+      </h1>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Un outil simple pour reprendre la main sur vos réclamations.</p>
+
+      <Section title="Notre mission">
+        <p>Plaidezy aide les particuliers à rédiger des lettres de réclamation claires, structurées et prêtes à envoyer pour des situations du quotidien : vol retardé, train, colis, amende ou caution non rendue.</p>
+        <p style={{ marginTop: 8 }}>L'objectif est simple : rendre les démarches plus accessibles, plus rapides et moins intimidantes.</p>
+      </Section>
+
+      <Section title="Ce que Plaidezy fait">
+        <ul style={{ paddingLeft: 20 }}>
+          <li>Vous guide avec un questionnaire court</li>
+          <li>Évalue automatiquement votre situation selon les critères du cas choisi</li>
+          <li>Génère une lettre personnalisée prête à copier ou télécharger</li>
+          <li>Vous rappelle les justificatifs utiles et les prochaines étapes</li>
+        </ul>
+      </Section>
+
+      <Section title="Ce que Plaidezy ne fait pas">
+        <p>Plaidezy n'est pas un cabinet d'avocat et ne fournit pas de conseil juridique personnalisé. Pour un litige complexe, urgent ou à fort enjeu, il est recommandé de consulter un professionnel du droit.</p>
+      </Section>
+
+      <Section title="Notre modèle">
+        <p>La vérification est gratuite. La génération de la lettre coûte <span style={strongStyle}>9€ une seule fois</span>. Il n'y a aucun abonnement et aucune commission sur les sommes que vous pourriez récupérer.</p>
+      </Section>
+
+      <Section title="Confidentialité">
+        <p>Vos informations servent uniquement à vérifier votre situation et à générer votre lettre. Elles ne sont pas revendues. Vous pouvez nous contacter à tout moment pour toute demande relative à vos données : <span style={strongStyle}>contact@plaidezy.com</span>.</p>
+      </Section>
+
+      <Section title="Contact">
+        <p>Une question, un remboursement, une suggestion ? Écrivez-nous à <a href="mailto:contact@plaidezy.com" style={linkStyle}>contact@plaidezy.com</a>.</p>
+      </Section>
+    </div>
+  );
+}
+
 function MentionsContent() {
   return (
     <div>
@@ -222,7 +268,7 @@ function ConfidentialiteContent() {
       <Section title="Sous-traitants">
         <ul style={{ paddingLeft: 20 }}>
           <li><span style={strongStyle}>SumUp :</span> paiements</li>
-          <li><span style={strongStyle}>Google Gemini :</span> génération IA — données non utilisées pour l'entraînement</li>
+          <li><span style={strongStyle}>Groq :</span> génération assistée par IA</li>
         </ul>
       </Section>
 
@@ -243,6 +289,9 @@ function ConfidentialiteContent() {
 
 /* ───────── Exports avec Layout ───────── */
 
+export function APropos() {
+  return <LegalLayout><AProposContent /></LegalLayout>;
+}
 export function MentionsLegales() {
   return <LegalLayout><MentionsContent /></LegalLayout>;
 }

@@ -8,9 +8,39 @@ interface PaymentGateProps {
   amount: string;
   onPaid: () => void;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
-export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentGateProps) {
+
+const evidenceByClaim: Record<string, string[]> = {
+  vol: ["Billet ou confirmation de réservation", "Carte d’embarquement si disponible", "Preuve du retard / annulation", "Échanges avec la compagnie"],
+  train: ["Billet ou e-billet", "Justificatif ou capture du retard", "Reçu de paiement", "Échanges avec SNCF / Eurostar"],
+  colis: ["Numéro de suivi", "Preuve d’achat ou facture", "Photos du colis si endommagé", "Échanges avec le transporteur"],
+  parking: ["Avis de contravention", "Justificatif de paiement si disponible", "Photos de la signalisation / horodateur", "Tout document utile au recours"],
+  caution: ["Bail", "État des lieux d’entrée et de sortie", "Preuve de remise des clés", "RIB et échanges avec le bailleur"],
+};
+
+function formatAnswerValue(value: string) {
+  if (!value) return "—";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+  }
+  return value;
+}
+
+function buildPreview(claim: ClaimConfig, answers: Record<string, string>, amount: string) {
+  const firstUseful = claim.questions
+    .map((q) => answers[q.id])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(" — ");
+
+  return `Objet : Réclamation — ${claim.name}\n\nMadame, Monsieur,\n\nJe vous contacte concernant ${firstUseful || "la situation décrite"}. Au regard des informations fournies, je sollicite ${amount || "l’indemnisation ou le remboursement applicable"}.\n\nLa suite de la lettre détaille les faits, les références utiles et la demande précise…`;
+}
+
+
+export default function PaymentGate({ claim, answers, amount, onPaid, onClose, onEdit }: PaymentGateProps) {
   const trapRef = useFocusTrap(true);
   const [hasSumUp, setHasSumUp] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -19,6 +49,11 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
   const [promoCode, setPromoCode] = useState("");
   const [promoApplying, setPromoApplying] = useState(false);
   const [promoError, setPromoError] = useState("");
+  const summaryItems = claim.questions
+    .filter((q) => answers[q.id])
+    .map((q) => ({ label: q.label, value: formatAnswerValue(answers[q.id]) }));
+  const evidenceItems = evidenceByClaim[claim.id] || ["Justificatifs liés à votre situation", "Preuve de paiement si applicable", "Échanges avec l’entreprise"];
+  const previewText = buildPreview(claim, answers, amount);
 
   useEffect(() => {
     fetch("/api/config")
@@ -139,6 +174,49 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
             </div>
             <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 4 }}>{claim.law.split("·")[0].trim()}</p>
             <p style={{ fontSize: 13, fontWeight: 700, color: "var(--green)" }}>{amount}</p>
+            {onEdit && (
+              <button type="button" className="wizard-btn-back" onClick={onEdit} style={{ marginTop: 12, width: "100%", padding: "10px 12px", fontSize: 13 }}>
+                Modifier mes réponses
+              </button>
+            )}
+          </div>
+
+          {summaryItems.length > 0 && (
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 16 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 800, color: "var(--ink)", marginBottom: 10 }}>Résumé avant paiement</h3>
+              {summaryItems.slice(0, 6).map((item, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "6px 0", borderBottom: i < Math.min(summaryItems.length, 6) - 1 ? "1px solid var(--border)" : "none" }}>
+                  <span style={{ fontSize: 12, color: "var(--muted)" }}>{item.label}</span>
+                  <span style={{ fontSize: 12, color: "var(--ink)", fontWeight: 700, textAlign: "right" }}>{item.value}</span>
+                </div>
+              ))}
+              {onEdit && (
+                <button type="button" className="wizard-btn-back" onClick={onEdit} style={{ marginTop: 12, width: "100%", padding: "10px 12px", fontSize: 13 }}>
+                  Modifier mes réponses
+                </button>
+              )}
+            </div>
+          )}
+
+          <div style={{ background: "linear-gradient(180deg, #fff 0%, var(--bg2) 100%)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, marginBottom: 16, position: "relative", overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 800, color: "var(--ink)" }}>Aperçu de votre lettre</h3>
+              <span style={{ fontSize: 11, fontWeight: 800, color: "var(--green)", background: "var(--green-light)", padding: "4px 8px", borderRadius: 999 }}>extrait</span>
+            </div>
+            <div style={{ fontSize: 12, lineHeight: 1.65, color: "var(--ink2)", whiteSpace: "pre-wrap", maxHeight: 126, overflow: "hidden" }}>
+              {previewText}
+            </div>
+            <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 44, background: "linear-gradient(transparent, #fff)" }} />
+          </div>
+
+          <div style={{ background: "var(--primary-light)", border: "1px solid rgba(13,148,136,0.18)", borderRadius: 10, padding: 14, marginBottom: 18 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", marginBottom: 8 }}>Justificatifs conseillés</h3>
+            {evidenceItems.map((item) => (
+              <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700 }}>{item}</span>
+              </div>
+            ))}
           </div>
 
           {/* Inclus */}

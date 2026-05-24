@@ -4,11 +4,21 @@ import PaymentGate from "./components/PaymentGate";
 import LetterBuilder from "./components/LetterBuilder";
 import PaymentSuccess from "./components/PaymentSuccess";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { MentionsLegales, CGV, Confidentialite } from "./components/LegalPages";
+import { MentionsLegales, CGV, Confidentialite, APropos } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
 import { usePaymentReturn } from "./hooks/usePaymentReturn";
 
 const STORAGE_KEY = "plaidezy_session";
+
+const trackEvent = (name: string, data: Record<string, unknown> = {}) => {
+  try {
+    window.dispatchEvent(new CustomEvent("plaidezy:analytics", { detail: { name, ...data } }));
+    const w = window as typeof window & { gtag?: (...args: unknown[]) => void; plausible?: (event: string, options?: unknown) => void };
+    w.gtag?.("event", name, data);
+    w.plausible?.(name, { props: data });
+  } catch { /* analytics noop */ }
+};
+
 
 const scrollTo = (id: string) => {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -514,6 +524,7 @@ function FooterSection() {
         <div className="footer-logo">Plaid<em>ezy</em></div>
         <div className="footer-divider" />
         <ul className="footer-links">
+          <li><a href="#a-propos">À propos</a></li>
           <li><a href="#mentions-legales">Mentions légales</a></li>
           <li><a href="#cgv">CGV</a></li>
           <li><a href="#confidentialite">Confidentialité</a></li>
@@ -565,11 +576,12 @@ function AppInner() {
   const [claimAmount, setClaimAmount] = useState("");
   const [preselectedClaimId, setPreselectedClaimId] = useState<string | null>(null);
 
-  const openWizard = useCallback(() => { setPreselectedClaimId(null); setWizardOpen(true); }, []);
-  const openWizardWithClaim = useCallback((claimId: string) => { setPreselectedClaimId(claimId); setWizardOpen(true); }, []);
+  const openWizard = useCallback(() => { trackEvent("wizard_open"); setPreselectedClaimId(null); setWizardOpen(true); }, []);
+  const openWizardWithClaim = useCallback((claimId: string) => { trackEvent("wizard_open", { claimId }); setPreselectedClaimId(claimId); setWizardOpen(true); }, []);
   const closeWizard = useCallback(() => setWizardOpen(false), []);
 
   const handleEligible = useCallback((claim: ClaimConfig, answers: Record<string, string>) => {
+    trackEvent("eligibility_success", { claimId: claim.id });
     setSelectedClaim(claim);
     const amount = claim.calculateAmount(answers);
     setClaimAmount(amount);
@@ -580,6 +592,7 @@ function AppInner() {
   }, []);
 
   const handlePaid = useCallback(() => {
+    trackEvent("payment_or_promo_validated", { claimId: selectedClaim?.id });
     setPaymentOpen(false);
     setBuilderOpen(true);
     try {
@@ -590,6 +603,16 @@ function AppInner() {
 
   const closePayment = useCallback(() => { setPaymentOpen(false); try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ } }, []);
   const closeBuilder = useCallback(() => { setBuilderOpen(false); try { localStorage.removeItem(STORAGE_KEY); } catch { /* noop */ } }, []);
+
+  const editAnswers = useCallback(() => {
+    if (!selectedClaim) return;
+    trackEvent("edit_answers", { claimId: selectedClaim.id });
+    setPaymentOpen(false);
+    setBuilderOpen(false);
+    setSuccessOpen(false);
+    setPreselectedClaimId(selectedClaim.id);
+    setWizardOpen(true);
+  }, [selectedClaim]);
 
   const paymentReturn = usePaymentReturn();
 
@@ -628,6 +651,7 @@ function AppInner() {
     return () => window.removeEventListener("hashchange", handler);
   }, []);
 
+  if (hash === "#a-propos") return <APropos />;
   if (hash === "#mentions-legales") return <MentionsLegales />;
   if (hash === "#cgv") return <CGV />;
   if (hash === "#confidentialite") return <Confidentialite />;
@@ -671,9 +695,9 @@ function AppInner() {
         </div>
       )}
 
-      {wizardOpen && <WizardModal onClose={closeWizard} onEligible={handleEligible} preselectedClaimId={preselectedClaimId} />}
-      {paymentOpen && selectedClaim && <PaymentGate claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onPaid={handlePaid} onClose={closePayment} />}
-      {builderOpen && selectedClaim && <LetterBuilder claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onClose={closeBuilder} />}
+      {wizardOpen && <WizardModal onClose={closeWizard} onEligible={handleEligible} preselectedClaimId={preselectedClaimId} initialAnswers={claimAnswers} />}
+      {paymentOpen && selectedClaim && <PaymentGate claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onPaid={handlePaid} onClose={closePayment} onEdit={editAnswers} />}
+      {builderOpen && selectedClaim && <LetterBuilder claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onClose={closeBuilder} onEdit={editAnswers} />}
     </>
   );
 }

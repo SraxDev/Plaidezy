@@ -2,11 +2,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { claimTypes, getAnalysisSteps, type ClaimConfig, type Question } from "../lib/claims";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 
+const WIZARD_DRAFT_KEY = "plaidezy_wizard_draft";
+
 interface WizardModalProps {
   onClose: () => void;
   onEligible: (claim: ClaimConfig, answers: Record<string, string>) => void;
   preselectedClaimId?: string | null;
   initialClaimId?: string | null;
+  initialAnswers?: Record<string, string>;
 }
 
 /* ─── Custom Select Component ─── */
@@ -443,12 +446,23 @@ function Tooltip({ children, text }: { children: React.ReactNode; text: string }
   );
 }
 
-export default function WizardModal({ onClose, onEligible, preselectedClaimId, initialClaimId }: WizardModalProps) {
-  const preId = preselectedClaimId ?? initialClaimId ?? null;
+export default function WizardModal({ onClose, onEligible, preselectedClaimId, initialClaimId, initialAnswers }: WizardModalProps) {
+  let draftClaimId: string | null = null;
+  let draftAnswers: Record<string, string> = {};
+  try {
+    const draft = JSON.parse(localStorage.getItem(WIZARD_DRAFT_KEY) || "{}");
+    if (draft?.claimId && draft?.answers) {
+      draftClaimId = draft.claimId;
+      draftAnswers = draft.answers;
+    }
+  } catch { /* noop */ }
+
+  const preId = preselectedClaimId ?? initialClaimId ?? draftClaimId ?? null;
   const initialClaim = preId ? claimTypes.find((c) => c.id === preId) || null : null;
+  const initialAnswerState = initialAnswers && Object.keys(initialAnswers).length > 0 ? initialAnswers : draftAnswers;
   const [step, setStep] = useState(initialClaim ? 1 : 0);
   const [selectedClaim, setSelectedClaim] = useState<ClaimConfig | null>(initialClaim);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(() => initialAnswerState || {});
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [confirmClose, setConfirmClose] = useState(false);
   const [toast, setToast] = useState<{ visible: boolean; type: 'success' | 'error' | 'info'; title: string; message: string }>({ visible: false, type: 'success', title: '', message: '' });
@@ -500,6 +514,13 @@ export default function WizardModal({ onClose, onEligible, preselectedClaimId, i
   const setAnswer = (id: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   };
+
+  useEffect(() => {
+    if (!selectedClaim || Object.keys(answers).length === 0) return;
+    try {
+      localStorage.setItem(WIZARD_DRAFT_KEY, JSON.stringify({ claimId: selectedClaim.id, answers, updatedAt: Date.now() }));
+    } catch { /* noop */ }
+  }, [selectedClaim, answers]);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -968,6 +989,7 @@ export default function WizardModal({ onClose, onEligible, preselectedClaimId, i
                       style={{ width: '100%' }}
                       onClick={() => {
                         showToast('success', 'Parfait !', 'Génération de votre lettre en cours...');
+                        try { localStorage.removeItem(WIZARD_DRAFT_KEY); } catch { /* noop */ }
                         onEligible(selectedClaim, answers);
                       }}
                     >

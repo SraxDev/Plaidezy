@@ -14,6 +14,7 @@
   --bg-primary: #FAFAFA;
   --bg-secondary: #F5F4F0;
   --bg-tertiary: #EEECE6;
+  --bg: var(--bg-primary);
 
   /* Surfaces */
   --surface: #FFFFFF;
