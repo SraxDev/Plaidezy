@@ -23,7 +23,7 @@ const evidenceByClaim: Record<string, string[]> = {
 function formatAnswerValue(value: string) {
   if (!value) return "—";
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const [, month, day] = value.split("-");
+    const [year, month, day] = value.split("-");
     return `${day}/${month}/${year}`;
   }
   return value;
