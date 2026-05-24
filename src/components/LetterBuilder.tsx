@@ -41,6 +41,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   const [error, setError] = useState("");
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState("");
   const [promoCode, setPromoCode] = useState("");
@@ -61,7 +62,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
       if (saved) { const session = JSON.parse(saved); paymentReference = session.checkoutRef || ""; savedPromoCode = session.promoCode || ""; }
     } catch { /* noop */ }
 
-    const body: Record<string, unknown> = { claimId: claim.id, answers, personal, paymentReference };
+    const body: Record<string, unknown> = { claimId: claim.id, answers, personal, paymentReference, checkoutReference: paymentReference };
     const activePromo = promoCodeOverride || savedPromoCode;
     if (activePromo) body.promoCode = activePromo;
 
@@ -78,7 +79,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
       setLocked(false);
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, step: "builder-unlocked" }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, ...(activePromo ? { promoCode: activePromo } : {}), step: "builder-unlocked" }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors de la génération");
@@ -102,7 +103,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
       setLocked(false);
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, step: "builder-unlocked" }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, promoCode: promoCode.trim(), step: "builder-unlocked" }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setPromoError(e instanceof Error ? e.message : "Erreur lors de la vérification");
@@ -133,6 +134,17 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   };
 
   const handleDevUnlock = () => setLocked(false);
+
+  const handleCopy = async () => {
+    if (!letterText) return;
+    try {
+      await navigator.clipboard.writeText(letterText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setError("Impossible de copier automatiquement. Sélectionnez le texte puis copiez-le manuellement.");
+    }
+  };
 
   const handleDownload = () => {
     if (!letterText) return;
@@ -261,6 +273,20 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
             </button>
           )}
 
+          {!letterText && (
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8,
+              marginTop: 12, marginBottom: 4,
+            }}>
+              {["Aucun abonnement", "PDF prêt à envoyer", "Modifiable après génération", "Données confidentielles"].map((item) => (
+                <div key={item} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--muted)", fontWeight: 700 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  {item}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Erreur */}
           {error && (
             <div style={{ background: "var(--accent-light)", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
@@ -360,22 +386,36 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
 
           {/* Actions quand débloqué */}
           {letterText && !locked && (
-            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-              <button className="wizard-btn-back" onClick={onClose} style={{ flex: 0 }}>Fermer</button>
-              <button
-                className="wizard-btn-next"
-                onClick={handleDownload}
-                disabled={downloading}
-                style={{ flex: 1 }}
-              >
-                {downloading ? (
-                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <div className="analysis-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                    PDF…
-                  </span>
-                ) : <>Télécharger le PDF</>}
-              </button>
-            </div>
+            <>
+              <div style={{
+                background: "var(--primary-light)", border: "1px solid rgba(13,148,136,0.18)",
+                borderRadius: 10, padding: 14, marginTop: 16,
+              }}>
+                <h4 style={{ fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", marginBottom: 6 }}>Conseils d'envoi</h4>
+                <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                  Relisez la lettre, ajoutez vos justificatifs utiles puis envoyez-la par email ou courrier recommandé selon votre situation. Conservez toujours une preuve d'envoi.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
+                <button className="wizard-btn-back" onClick={onClose} style={{ flex: 0 }}>Fermer</button>
+                <button className="wizard-btn-back" onClick={handleCopy} style={{ flex: 1 }}>
+                  {copied ? "✓ Copiée" : "Copier la lettre"}
+                </button>
+                <button
+                  className="wizard-btn-next"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  style={{ flex: 1 }}
+                >
+                  {downloading ? (
+                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                      <div className="analysis-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                      PDF…
+                    </span>
+                  ) : <>Télécharger le PDF</>}
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>

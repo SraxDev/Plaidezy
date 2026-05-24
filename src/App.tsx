@@ -305,7 +305,7 @@ function VersusSection() {
 function HowItWorksSection() {
   const steps = [
     { num: "01", icon: "search", title: "Décrivez votre situation", desc: "En quelques mots, sans jargon juridique.", badge: "Gratuit" },
-    { num: "02", icon: "zap", title: "Analyse de vos droits", desc: "On identifie les lois applicables à votre cas.", badge: "< 30 sec" },
+    { num: "02", icon: "zap", title: "Évaluation de votre situation", desc: "On vérifie automatiquement les critères applicables à votre cas.", badge: "< 30 sec" },
     { num: "03", icon: "lock", title: "Payez si éligible", desc: "9€ uniquement si vous avez un droit à faire valoir.", badge: "9€" },
     { num: "04", icon: "send", title: "Recevez votre lettre", desc: "PDF prêt à envoyer avec les articles de loi exacts.", badge: "2 min" },
   ];
@@ -385,7 +385,7 @@ function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
 function GuaranteesSection() {
   const cards = [
     { icon: "refund", title: "Satisfait ou remboursé", text: "Pas satisfait ? On vous rembourse les 9€ sans question, dans les 7 jours.", featured: true },
-    { icon: "scales", title: "Juridiquement solide", text: "Chaque lettre cite les articles de loi exacts. Pas un modèle générique — du sur-mesure.", featured: false },
+    { icon: "scales", title: "Fondée sur les textes", text: "La lettre s’appuie sur les références utiles à votre situation. Pas un modèle générique — du personnalisé.", featured: false },
     { icon: "shield-check", title: "Zéro commission", text: "9€ fixe, quel que soit le montant récupéré. Vos 400€ restent 100% les vôtres.", featured: false },
   ];
   const Icon = (name: string) => { const C = guaranteeIcons[name]; return C ? <C /> : null; };
@@ -414,11 +414,14 @@ function GuaranteesSection() {
 /* ─── FAQ ─── */
 function FAQSection() {
   const faqs = [
-    { q: "Est-ce que Plaidezy remplace un avocat ?", a: "Non. Plaidezy est un outil d'assistance rédactionnelle pour des cas clairs et encadrés par la loi. Pour des litiges complexes, consultez un avocat. Mais pour 80% des réclamations courantes, une lettre bien rédigée suffit." },
-    { q: "Que se passe-t-il si l'entreprise ne répond pas ?", a: "Votre lettre est une mise en demeure avec délai de réponse (30 jours). En cas de silence, vous pouvez saisir le médiateur ou la juridiction compétente — votre lettre constitue une preuve de démarche amiable." },
-    { q: "Pourquoi 9€ et pas gratuit ?", a: "La vérification est gratuite. Les 9€ couvrent la génération de votre lettre personnalisée avec les articles de loi exacts. C'est le prix d'un café, contre 25–35% du gain chez un concurrent." },
-    { q: "Mes données sont-elles confidentielles ?", a: "Oui. Vos informations sont utilisées uniquement pour générer votre lettre. Elles ne sont jamais vendues ni partagées." },
-    { q: "Ça marche vraiment ?", a: "Les droits couverts sont encadrés par des textes contraignants (EU261/2004, Code civil, Code des transports…). Une lettre qui cite les bons articles oblige légalement l'entreprise à répondre." },
+    { q: "Est-ce que Plaidezy remplace un avocat ?", a: "Non. Plaidezy est un outil d'assistance rédactionnelle pour des cas courants et encadrés. Il ne constitue pas un conseil juridique personnalisé et ne remplace pas un avocat, notamment pour les litiges complexes." },
+    { q: "Est-ce que je paie si je ne suis pas éligible ?", a: "Non. La vérification est gratuite. Vous ne payez les 9€ que si votre situation semble compatible avec une réclamation et que vous souhaitez générer la lettre." },
+    { q: "Qu’est-ce que je reçois exactement ?", a: "Vous recevez une lettre personnalisée avec vos informations, le résumé des faits, les références utiles, une demande claire et un PDF prêt à envoyer. Vous pouvez aussi copier le texte pour le modifier." },
+    { q: "Y a-t-il un abonnement ou une commission ?", a: "Non. Le paiement est unique : 9€ pour générer votre lettre. Plaidezy ne prend aucune commission sur les sommes que vous pourriez récupérer." },
+    { q: "Que se passe-t-il si l'entreprise ne répond pas ?", a: "La lettre formalise votre démarche et fixe un délai de réponse. En cas de silence, vous pouvez ensuite contacter un médiateur, une association de consommateurs ou la juridiction compétente selon votre situation." },
+    { q: "Mes données sont-elles confidentielles ?", a: "Oui. Vos informations servent à vérifier votre situation et rédiger votre lettre. Elles ne sont pas vendues. Évitez tout de même de saisir des informations inutiles ou trop sensibles." },
+    { q: "Puis-je modifier la lettre ?", a: "Oui. Une fois générée, vous pouvez copier la lettre, l’ajuster si nécessaire, puis télécharger le PDF." },
+    { q: "Et si je ne suis pas satisfait ?", a: "Vous pouvez nous contacter. L’objectif est simple : si la lettre générée ne répond pas correctement à votre situation, on trouve une solution ou on vous rembourse selon la garantie affichée." },
   ];
   const [open, setOpen] = useState<number | null>(null);
   return (

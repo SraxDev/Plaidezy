@@ -3,6 +3,43 @@ import { rateLimitSupabase } from "./_rateLimit.js";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
+function normalizePromoCode(code) {
+  return String(code || "").trim().toUpperCase();
+}
+
+async function validatePromoCode(code, supabase) {
+  const normalized = normalizePromoCode(code);
+  if (!normalized) return { valid: false, error: "Code promo manquant." };
+
+  // 1) Codes simples configurés dans Vercel : PROMO_CODES=CODE1,CODE2
+  const envCodes = (process.env.PROMO_CODES || "")
+    .split(",")
+    .map((c) => normalizePromoCode(c))
+    .filter(Boolean);
+
+  if (envCodes.includes(normalized)) {
+    return { valid: true, source: "env", code: normalized };
+  }
+
+  // 2) Codes stockés en base Supabase : table promo_codes(code, uses_left)
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("promo_codes")
+      .select("id, code, uses_left")
+      .eq("code", normalized)
+      .maybeSingle();
+
+    if (!error && data) {
+      if (typeof data.uses_left === "number" && data.uses_left <= 0) {
+        return { valid: false, error: "Ce code promo a déjà été utilisé." };
+      }
+      return { valid: true, source: "supabase", id: data.id, code: normalized };
+    }
+  }
+
+  return { valid: false, error: "Code promo invalide." };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -17,7 +54,8 @@ export default async function handler(req, res) {
   if (!GROQ_KEY)
     return res.status(500).json({ error: "Clé Groq non configurée." });
 
-  const { claimId, checkoutReference, promoCode, answers } = req.body || {};
+  const { claimId, checkoutReference, paymentReference, promoCode, answers, personal } = req.body || {};
+  const reference = checkoutReference || paymentReference;
 
   if (!claimId || typeof claimId !== "string" || claimId.length > 50)
     return res.status(400).json({ error: "claimId invalide." });
@@ -25,43 +63,41 @@ export default async function handler(req, res) {
   if (!answers || typeof answers !== "object")
     return res.status(400).json({ error: "Données de réclamation manquantes." });
 
+  const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
   // Vérification accès : soit paiement vérifié, soit code promo valide
   let accessGranted = false;
+  let paymentToConsume = null;
+  let promoToConsume = null;
 
   if (promoCode && typeof promoCode === "string") {
-    // Vérification code promo
-    const validCodes = (process.env.PROMO_CODES || "").split(",").map((c) => c.trim().toUpperCase());
-    if (validCodes.includes(promoCode.toUpperCase())) {
-      accessGranted = true;
-    } else {
-      return res.status(403).json({ error: "Code promo invalide." });
-    }
-  } else if (checkoutReference && SUPABASE_URL && SUPABASE_KEY) {
-    // Vérification paiement SumUp via Supabase
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const promo = await validatePromoCode(promoCode, supabase);
+    if (!promo.valid) return res.status(403).json({ error: promo.error || "Code promo invalide." });
+    accessGranted = true;
+    promoToConsume = promo;
+  } else if (reference && typeof reference === "string" && supabase) {
     const { data: payment } = await supabase
       .from("payments")
       .select("id, used")
-      .eq("reference", checkoutReference)
+      .eq("reference", reference)
       .maybeSingle();
 
     if (!payment) return res.status(403).json({ error: "Paiement introuvable ou non confirmé." });
     if (payment.used) return res.status(403).json({ error: "Ce paiement a déjà été utilisé." });
 
-    // Marque le paiement comme consommé
-    await supabase.from("payments").update({ used: true }).eq("id", payment.id);
     accessGranted = true;
+    paymentToConsume = payment;
   } else if (!SUPABASE_URL) {
     // Mode dev sans Supabase
     accessGranted = true;
   }
 
   if (!accessGranted) {
-    return res.status(403).json({ error: "Accès non autorisé. Veuillez effectuer le paiement." });
+    return res.status(403).json({ error: "Accès non autorisé. Veuillez effectuer le paiement ou utiliser un code promo valide." });
   }
 
   // Construction du prompt selon le type de réclamation
-  const prompt = buildPrompt(claimId, answers);
+  const prompt = buildPrompt(claimId, answers, personal);
 
   try {
     const groqRes = await fetch(GROQ_API_URL, {
@@ -78,7 +114,7 @@ export default async function handler(req, res) {
           {
             role: "system",
             content:
-              "Tu es un expert juridique français. Tu rédiges des lettres de réclamation professionnelles, précises et légalement fondées. Utilise un ton formel. Cite les articles de loi exacts. Structure la lettre avec : objet, faits, fondements juridiques, demande chiffrée, délai de réponse (15 jours), et formule de politesse. Réponds UNIQUEMENT avec le corps de la lettre, sans balises ni markdown.",
+              "Tu es un assistant de rédaction juridique français. Tu rédiges des lettres de réclamation professionnelles, précises et fondées sur les textes applicables. Utilise un ton formel. Cite les références utiles quand elles sont pertinentes. Structure la lettre avec : coordonnées de l'expéditeur si fournies, objet, faits, fondements, demande chiffrée, délai de réponse, formule de politesse. Réponds UNIQUEMENT avec le corps de la lettre, sans balises ni markdown.",
           },
           { role: "user", content: prompt },
         ],
@@ -95,6 +131,30 @@ export default async function handler(req, res) {
     const letter = groqData.choices?.[0]?.message?.content?.trim();
     if (!letter) return res.status(500).json({ error: "Réponse vide du modèle." });
 
+    // On consomme le paiement / code promo uniquement après génération réussie.
+    if (supabase && paymentToConsume?.id) {
+      await supabase.from("payments").update({ used: true }).eq("id", paymentToConsume.id);
+    }
+
+    if (supabase && promoToConsume?.source === "supabase" && promoToConsume.id) {
+      await supabase.rpc("decrement_promo_uses", { promo_id: promoToConsume.id }).then(async ({ error }) => {
+        // Fallback si la fonction SQL n'existe pas : décrément manuel.
+        if (error) {
+          const { data } = await supabase
+            .from("promo_codes")
+            .select("uses_left")
+            .eq("id", promoToConsume.id)
+            .maybeSingle();
+          if (data && typeof data.uses_left === "number" && data.uses_left > 0) {
+            await supabase
+              .from("promo_codes")
+              .update({ uses_left: data.uses_left - 1 })
+              .eq("id", promoToConsume.id);
+          }
+        }
+      });
+    }
+
     return res.json({ letter });
   } catch (err) {
     console.error("generate-letter error:", err);
@@ -102,8 +162,8 @@ export default async function handler(req, res) {
   }
 }
 
-function buildPrompt(claimId, answers) {
-  const base = `Rédige une lettre de réclamation formelle en français pour le cas suivant.\nType de réclamation : ${claimId}\nInformations fournies par l'utilisateur :\n${JSON.stringify(answers, null, 2)}\n`;
+function buildPrompt(claimId, answers, personal = {}) {
+  const base = `Rédige une lettre de réclamation formelle en français pour le cas suivant.\nType de réclamation : ${claimId}\nCoordonnées de l'utilisateur :\n${JSON.stringify(personal || {}, null, 2)}\nInformations fournies par l'utilisateur :\n${JSON.stringify(answers, null, 2)}\n`;
 
   const hints = {
     vol: "Applique le règlement CE n°261/2004. Si retard > 3h ou annulation < 14 jours avant départ, l'indemnisation est de 250€, 400€ ou 600€ selon la distance. Adresse la lettre à la compagnie aérienne.",

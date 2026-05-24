@@ -128,8 +128,8 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
         <div className="modal-body">
-          <h2 className="wizard-title">Générer ma lettre juridique</h2>
-          <p className="wizard-subtitle">9€ fixe · Aucune commission sur votre indemnisation</p>
+          <h2 className="wizard-title">Générer ma lettre prête à envoyer</h2>
+          <p className="wizard-subtitle">Paiement unique de 9€ · Aucun abonnement · Zéro commission</p>
 
           {/* Résumé */}
           <div style={{ background: "var(--bg2)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
@@ -144,9 +144,11 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
           {/* Inclus */}
           <div style={{ marginBottom: 20 }}>
             {[
-              "Lettre personnalisée générée par IA",
-              "Articles de loi exacts cités",
+              "Lettre personnalisée selon vos réponses",
+              "Résumé clair des faits et demande chiffrée",
               "PDF professionnel prêt à envoyer",
+              "Copie du texte pour modification",
+              "Paiement sécurisé · aucun frais caché",
               "Satisfait ou remboursé 7 jours",
             ].map((item, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0" }}>
@@ -202,8 +204,8 @@ export default function PaymentGate({ claim, amount, onPaid, onClose }: PaymentG
             )}
           </button>
 
-          <p style={{ fontSize: 11, color: "var(--light)", textAlign: "center", marginTop: 12 }}>
-            Paiement sécurisé via SumUp · Satisfait ou remboursé 7 jours
+          <p style={{ fontSize: 11, color: "var(--light)", textAlign: "center", marginTop: 12, lineHeight: 1.6 }}>
+            Paiement sécurisé via SumUp · Accès immédiat après paiement · Plaidezy est un outil d’assistance rédactionnelle, pas un cabinet d’avocat.
           </p>
         </div>
       </div>
