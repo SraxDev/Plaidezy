@@ -2253,7 +2253,17 @@ footer:hover .footer-divider {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-xl);
   padding: 6px;
-  animation: slide-in-right 0.4s ease;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(18px);
+  transition: opacity 0.25s ease, visibility 0.25s ease, transform 0.25s ease;
+}
+.mobile-sticky.visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 .mobile-sticky button {
   width: 100%;
@@ -3131,20 +3141,43 @@ input[type="number"]::-webkit-outer-spin-button {
     --section-padding: 80px;
   }
   .hero {
-    padding: 100px 20px 60px;
+    padding: 84px 20px 44px;
+    min-height: auto;
   }
   .hero h1 {
     font-size: 32px;
     letter-spacing: -1.5px;
+    margin-bottom: 20px;
+  }
+  .hero-eyebrow {
+    margin-bottom: 24px;
+  }
+  .hero-desc {
+    margin-bottom: 30px;
   }
   .hero-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 14px;
+    margin-bottom: 30px;
   }
   .btn-primary,
   .btn-outline {
     justify-content: center;
     width: 100%;
+  }
+  .btn-outline {
+    padding: 15px 20px;
+  }
+  .hero-trust {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    justify-items: center;
+    margin-top: 4px;
+  }
+  .trust-sep {
+    display: none;
   }
   .services-grid {
     grid-template-columns: 1fr;

@@ -126,7 +126,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
           <a href="#services" onClick={() => setMenuOpen(false)}>Cas couverts</a>
           <a href="#comment" onClick={() => setMenuOpen(false)}>Comment ça marche</a>
           <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
-          <button className="nav-btn" style={{ borderRadius: "8px", width: "100%" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Démarrer — 9€</button>
+          <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Démarrer — 9€</button>
         </div>
       )}
     </>
@@ -151,16 +151,13 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
           <span>9€ fixe · Zéro commission</span>
         </div>
         <h1>
-          Réclamez ce qui<br />vous <span className="highlight">appartient.</span>
+          Réclamez ce qui<br />vous <span className="green">appartient.</span>
         </h1>
         <p className="hero-desc">
           Vol annulé, amende injuste, caution bloquée — Plaidezy génère votre lettre juridique en 2 minutes. Pas de commission sur vos gains.
         </p>
         <div className="hero-actions">
-          <button className="btn-primary" onClick={onOpenWizard}>
-            Vérifier mon droit gratuitement
-            <IconArrowRight />
-          </button>
+          <button className="btn-primary" onClick={onOpenWizard}>Vérifier mon droit gratuitement</button>
           <button className="btn-outline" onClick={() => scrollTo("services")}>Voir les cas</button>
         </div>
         <div className="hero-trust">
@@ -223,7 +220,7 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
       <div className="services-header reveal">
         <div>
           <div className="section-label">Cas couverts</div>
-          <h2 className="section-h2">Vos droits,<br /><span className="highlight">tous les cas.</span></h2>
+          <h2 className="section-h2">Vos droits,<br /><span className="green">tous les cas.</span></h2>
         </div>
         <p>Des situations concrètes, des lois qui vous protègent. Plaidezy connaît les textes et génère la bonne lettre.</p>
       </div>
@@ -231,7 +228,7 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
         {services.map((s, i) => (
           <div className={`reveal reveal-delay-${Math.min(i + 1, 5)}`} key={i}>
             <div
-              className={`service-card ${s.icon}${s.locked ? " locked" : ""}`}
+              className={`service-card${s.locked ? " locked" : ""}`}
               onClick={() => { if (!s.locked && serviceToClaim[s.icon]) onSelectService(serviceToClaim[s.icon]); }}
               style={!s.locked ? { cursor: "pointer" } : {}}
             >
@@ -270,7 +267,7 @@ function VersusSection() {
   const renderCell = (val: boolean | string | null) => {
     if (val === true) return <span className="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg></span>;
     if (val === false) return <span className="cross"><IconCross /></span>;
-    if (val === null) return <span style={{ color: "var(--text-light)", fontSize: "13px" }}>Partiel</span>;
+    if (val === null) return <span style={{ color: "var(--light)", fontSize: "13px" }}>Partiel</span>;
     return <span className="val">{val}</span>;
   };
   return (
@@ -279,7 +276,7 @@ function VersusSection() {
         <div className="versus-header">
           <div>
             <div className="section-label">Comparaison</div>
-            <h2 className="section-h2">Pourquoi<br /><span className="highlight">Plaidezy ?</span></h2>
+            <h2 className="section-h2">Pourquoi<br /><span className="green">Plaidezy ?</span></h2>
           </div>
           <p>Les alternatives coûtent cher ou prennent du temps. Plaidezy fait les deux mieux.</p>
         </div>
@@ -318,7 +315,7 @@ function HowItWorksSection() {
     <section className="how-section reveal" id="comment">
       <div className="how-header">
         <div className="section-label" style={{ justifyContent: "center" }}>Le processus</div>
-        <h2 className="section-h2">En <span className="highlight">4 étapes.</span></h2>
+        <h2 className="section-h2">En <span className="green">4 étapes.</span></h2>
       </div>
       <div className="how-grid">
         {steps.map((step, i) => (
@@ -343,8 +340,8 @@ function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
       <div className="letter-inner">
         <div className="letter-left">
           <div className="section-label">La lettre</div>
-          <h2 className="section-h2" style={{ marginBottom: "16px" }}>Pas un modèle.<br /><span className="highlight">Votre lettre.</span></h2>
-          <p style={{ fontSize: "16px", lineHeight: "1.75", color: "var(--text-muted)", marginBottom: "28px", fontWeight: 500 }}>
+          <h2 className="section-h2" style={{ marginBottom: "16px" }}>Pas un modèle.<br /><span className="green">Votre lettre.</span></h2>
+          <p style={{ fontSize: "15px", lineHeight: "1.7", color: "var(--muted)", marginBottom: "24px" }}>
             Chaque lettre est générée selon votre situation : la bonne loi, le bon montant, le bon délai.
           </p>
           <ul>
@@ -367,10 +364,10 @@ function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
           <div className="letter-title-line">LETTRE DE RÉCLAMATION — MISE EN DEMEURE</div>
           <div className="letter-body">
             <p>Madame, Monsieur,</p>
-            <p style={{ marginTop: "12px" }}>
+            <p style={{ marginTop: "10px" }}>
               Je me permets de vous contacter suite à <span className="redacted">██████████████</span>. Conformément au règlement (CE) n°261/2004, article 7§1, je suis en droit de prétendre à une indemnisation de <strong>400,00 €</strong>.
             </p>
-            <p style={{ marginTop: "12px" }}>
+            <p style={{ marginTop: "10px" }}>
               En l'absence de réponse satisfaisante de votre part dans un délai de <strong>30 jours</strong>…
             </p>
           </div>
@@ -395,14 +392,14 @@ function GuaranteesSection() {
 
   return (
     <section className="testi-section" id="garanties">
-      <div style={{ textAlign: "center", marginBottom: "56px" }} className="reveal">
+      <div style={{ textAlign: "center", marginBottom: "48px" }} className="reveal">
         <div className="section-label" style={{ justifyContent: "center" }}>Nos engagements</div>
-        <h2 className="section-h2">Ce qu'on vous<br /><span className="highlight">garantit.</span></h2>
+        <h2 className="section-h2">Ce qu'on vous<br /><span className="green">garantit.</span></h2>
       </div>
       <div className="guarantees-grid">
         {cards.map((card, i) => (
           <div className={`reveal reveal-delay-${i + 1}`} key={i}>
-            <div className={`t-card${card.featured ? " featured-green" : ""}`} style={{ textAlign: "center", padding: "40px 28px" }}>
+            <div className={`t-card${card.featured ? " featured-green" : ""}`} style={{ textAlign: "center", padding: "36px 24px" }}>
               <div className="t-icon-wrap">{Icon(card.icon)}</div>
               <h3>{card.title}</h3>
               <p className="t-text">{card.text}</p>
@@ -429,7 +426,7 @@ function FAQSection() {
       <div className="faq-inner">
         <div className="faq-header">
           <div className="section-label" style={{ justifyContent: "center" }}>FAQ</div>
-          <h2 className="section-h2">Questions<br /><span className="highlight">fréquentes.</span></h2>
+          <h2 className="section-h2">Questions<br /><span className="green">fréquentes.</span></h2>
         </div>
         <div className="faq-list">
           {faqs.map((faq, i) => (
@@ -467,8 +464,8 @@ function EmailSection() {
     <section className="email-section reveal">
       <div className="email-inner">
         <div className="section-label" style={{ justifyContent: "center" }}>Restez informé</div>
-        <h2 className="section-h2" style={{ marginBottom: "10px" }}>Nouveaux cas<br /><span className="highlight">bientôt.</span></h2>
-        <p style={{ fontSize: "15px", color: "var(--text-muted)", lineHeight: "1.7", marginBottom: "0" }}>
+        <h2 className="section-h2" style={{ marginBottom: "8px" }}>Nouveaux cas<br /><span className="green">bientôt.</span></h2>
+        <p style={{ fontSize: "14px", color: "var(--muted)", lineHeight: "1.65" }}>
           Abonnement piège, frais bancaires abusifs… Soyez notifié dès qu'un nouveau cas est disponible.
         </p>
         {!submitted ? (
@@ -482,7 +479,7 @@ function EmailSection() {
             Vous serez notifié des nouveaux cas !
           </div>
         )}
-        {error && <p style={{ color: "var(--accent-rose)", fontSize: "13px", marginTop: "10px" }}>Erreur — réessayez dans un instant.</p>}
+        {error && <p style={{ color: "var(--accent)", fontSize: "13px", marginTop: "8px" }}>Erreur — réessayez dans un instant.</p>}
       </div>
     </section>
   );
@@ -538,9 +535,18 @@ function FooterSection() {
 
 /* ─── MOBILE STICKY ─── */
 function MobileSticky({ onStart }: { onStart: () => void }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const updateVisibility = () => setVisible(window.scrollY > 260);
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updateVisibility);
+  }, []);
+
   return (
-    <div className="mobile-sticky">
-      <button onClick={onStart}>Vérifier mon droit — gratuit</button>
+    <div className={`mobile-sticky${visible ? " visible" : ""}`} aria-hidden={!visible}>
+      <button onClick={onStart}>Vérifier mon droit gratuitement</button>
     </div>
   );
 }
@@ -641,9 +647,9 @@ function AppInner() {
 
       {paymentReturn.verifying && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ textAlign: "center", padding: "56px 40px" }}>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "22px", fontWeight: 700, marginBottom: "10px" }}>Vérification du paiement…</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "15px" }}>Merci de patienter.</p>
+          <div className="modal-content" style={{ textAlign: "center", padding: "48px 32px" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}>Vérification du paiement…</h2>
+            <p style={{ color: "var(--muted)", fontSize: "14px" }}>Merci de patienter.</p>
           </div>
         </div>
       )}
@@ -654,9 +660,9 @@ function AppInner() {
 
       {paymentReturn.error && (
         <div className="modal-backdrop">
-          <div className="modal-content" style={{ textAlign: "center", padding: "56px 40px" }}>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: "22px", fontWeight: 700, marginBottom: "10px" }}>Paiement non vérifié</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: "15px", marginBottom: "24px" }}>{paymentReturn.error}</p>
+          <div className="modal-content" style={{ textAlign: "center", padding: "48px 32px" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: 700, marginBottom: "8px" }}>Paiement non vérifié</h2>
+            <p style={{ color: "var(--muted)", fontSize: "14px", marginBottom: "20px" }}>{paymentReturn.error}</p>
             <button className="btn-primary" style={{ margin: "0 auto" }} onClick={() => window.location.replace("/")}>Fermer</button>
           </div>
         </div>
