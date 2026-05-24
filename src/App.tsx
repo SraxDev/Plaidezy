@@ -145,6 +145,13 @@ const guaranteeIcons: Record<string, () => JSX.Element> = {
 function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeHash, setActiveHash] = useState(window.location.hash);
+  const guidesActive = activeHash === "#guides" || activeHash.startsWith("#guide-");
+  useEffect(() => {
+    const syncHash = () => setActiveHash(window.location.hash);
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
   useEffect(() => {
     const h = () => { setScrolled(window.scrollY > 40); setMenuOpen(false); };
     window.addEventListener("scroll", h, { passive: true });
@@ -160,7 +167,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
         <ul className="nav-links">
           <li><a href="#services" onClick={(e) => { e.preventDefault(); navigateToLandingSection("services"); }}>Cas couverts</a></li>
           <li><a href="#comment" onClick={(e) => { e.preventDefault(); navigateToLandingSection("comment"); }}>Comment ça marche</a></li>
-          <li><a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a></li>
+          <li><a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a></li>
           <li><a href="#faq" onClick={(e) => { e.preventDefault(); navigateToLandingSection("faq"); }}>FAQ</a></li>
         </ul>
         <div className="nav-right" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -174,7 +181,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
         <div className="mobile-nav">
           <a href="#services" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("services"); }}>Cas couverts</a>
           <a href="#comment" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("comment"); }}>Comment ça marche</a>
-          <a href="#guides" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToHashPage("#guides"); }}>Guides</a>
+          <a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToHashPage("#guides"); }}>Guides</a>
           <a href="#faq" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("faq"); }}>FAQ</a>
           <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Démarrer — 9€</button>
         </div>
@@ -635,6 +642,12 @@ function GuidesTeaserSection() {
 }
 
 function GuidesPage() {
+  const [selectedCategory, setSelectedCategory] = useState("Tous");
+  const categories = ["Tous", ...Array.from(new Set(guideArticles.map((guide) => guide.category)))];
+  const filteredGuides = selectedCategory === "Tous"
+    ? guideArticles
+    : guideArticles.filter((guide) => guide.category === selectedCategory);
+
   return (
     <main className="guides-page" id="main-content">
       <section className="guides-hero">
@@ -642,8 +655,20 @@ function GuidesPage() {
         <h1>Les bons réflexes pour<br /><span className="green">faire une réclamation.</span></h1>
         <p>Délais, justificatifs, montants, erreurs à éviter : choisissez un guide et avancez étape par étape, sans jargon.</p>
       </section>
+      <div className="guide-filter-bar" role="tablist" aria-label="Filtrer les guides">
+        {categories.map((category) => (
+          <button
+            key={category}
+            className={selectedCategory === category ? "active" : ""}
+            onClick={() => setSelectedCategory(category)}
+            type="button"
+          >
+            {category}
+          </button>
+        ))}
+      </div>
       <section className="guides-page-grid">
-        {guideArticles.map((guide) => (
+        {filteredGuides.map((guide) => (
           <article className="guide-card guide-card-large" key={guide.slug}>
             <div className="guide-card-top">
               <GuideVisualIcon iconKey={guide.iconKey} />
@@ -662,9 +687,21 @@ function GuidesPage() {
 }
 
 function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: () => void }) {
+  const currentIndex = guideArticles.findIndex((item) => item.slug === guide.slug);
+  const previousGuide = currentIndex > 0 ? guideArticles[currentIndex - 1] : null;
+  const nextGuide = currentIndex >= 0 && currentIndex < guideArticles.length - 1 ? guideArticles[currentIndex + 1] : null;
+  const scrollToArticlePart = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   return (
     <main className="guide-article-page" id="main-content">
-      <a className="guide-back" href="#guides">← Tous les guides</a>
+      <nav className="guide-breadcrumb" aria-label="Fil d’Ariane">
+        <a href="/" onClick={(e) => { e.preventDefault(); window.location.hash = ""; window.scrollTo({ top: 0, behavior: "smooth" }); }}>Accueil</a>
+        <span>/</span>
+        <a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a>
+        <span>/</span>
+        <strong>{guide.category}</strong>
+      </nav>
+
       <article className="guide-article">
         <header className="guide-article-header">
           <GuideVisualIcon iconKey={guide.iconKey} big />
@@ -673,28 +710,58 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
           <p>{guide.intro}</p>
         </header>
 
-        <div className="guide-article-content">
-          {guide.sections.map((section) => (
-            <section key={section.title}>
-              <h2>{section.title}</h2>
-              {section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-            </section>
-          ))}
-
-          <aside className="guide-checklist">
-            <h2>Justificatifs à préparer</h2>
-            <div>
-              {guide.checklist.map((item) => (
-                <span key={item}><IconCheck /> {item}</span>
+        <div className="guide-reading-layout">
+          <aside className="guide-toc" aria-label="Sommaire du guide">
+            <div className="guide-toc-card">
+              <span className="guide-toc-label">Dans ce guide</span>
+              {guide.sections.map((section, index) => (
+                <button key={section.title} onClick={() => scrollToArticlePart(`guide-section-${index}`)} type="button">
+                  {index + 1}. {section.title}
+                </button>
               ))}
+              <button onClick={() => scrollToArticlePart("guide-checklist")} type="button">Justificatifs</button>
+              <button onClick={() => scrollToArticlePart("guide-next-step")} type="button">Prochaine étape</button>
             </div>
           </aside>
 
-          <section className="guide-final-cta">
-            <h2>Prêt à préparer votre courrier ?</h2>
-            <p>Si votre situation correspond au guide, vous pouvez utiliser Plaidezy pour structurer une lettre personnalisée à partir de vos réponses.</p>
-            <button className="btn-primary" onClick={onStart}>Préparer ma lettre</button>
-          </section>
+          <div className="guide-article-content">
+            {guide.sections.map((section, index) => (
+              <section key={section.title} id={`guide-section-${index}`}>
+                <h2>{section.title}</h2>
+                {section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              </section>
+            ))}
+
+            <aside className="guide-checklist" id="guide-checklist">
+              <h2>Justificatifs à préparer</h2>
+              <div>
+                {guide.checklist.map((item) => (
+                  <span key={item}><IconCheck /> {item}</span>
+                ))}
+              </div>
+            </aside>
+
+            <section className="guide-final-cta" id="guide-next-step">
+              <h2>Prêt à préparer votre courrier ?</h2>
+              <p>Si votre situation correspond au guide, vous pouvez utiliser Plaidezy pour structurer une lettre personnalisée à partir de vos réponses.</p>
+              <button className="btn-primary" onClick={onStart}>Préparer ma lettre</button>
+            </section>
+
+            <nav className="guide-next-prev" aria-label="Navigation entre les guides">
+              {previousGuide ? (
+                <a href={`#guide-${previousGuide.slug}`} className="prev">
+                  <span>← Guide précédent</span>
+                  <strong>{previousGuide.title}</strong>
+                </a>
+              ) : <span />}
+              {nextGuide ? (
+                <a href={`#guide-${nextGuide.slug}`} className="next">
+                  <span>Guide suivant →</span>
+                  <strong>{nextGuide.title}</strong>
+                </a>
+              ) : <span />}
+            </nav>
+          </div>
         </div>
       </article>
     </main>
@@ -762,32 +829,44 @@ function CTASection({ onStart }: { onStart: () => void }) {
 
 /* ─── FOOTER ─── */
 function FooterSection() {
+  const popularGuides = guideArticles.slice(0, 4);
   return (
     <footer>
-      <div className="footer-inner">
-        <div className="footer-logo">Plaid<em>ezy</em></div>
-        <div className="footer-divider" />
-        <ul className="footer-links">
-          <li><a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a></li>
-          <li><a href="#a-propos">À propos</a></li>
-          <li><a href="#mentions-legales">Mentions légales</a></li>
-          <li><a href="#cgv">CGV</a></li>
-          <li><a href="#confidentialite">Confidentialité</a></li>
-          <li><a href="mailto:contact@plaidezy.com">Contact</a></li>
-        </ul>
-        <div className="footer-badges">
-          <span className="footer-badge">
-            <IconShieldCheck /> Données chiffrées
-          </span>
-          <span className="footer-badge">
-            <IconScales /> Conforme RGPD
-          </span>
+      <div className="footer-inner footer-rich">
+        <div className="footer-brand-col">
+          <div className="footer-logo">Plaid<em>ezy</em></div>
+          <p>Des guides simples et des lettres de réclamation personnalisées pour vous aider à agir plus sereinement.</p>
+          <div className="footer-badges">
+            <span className="footer-badge"><IconShieldCheck /> Données chiffrées</span>
+            <span className="footer-badge"><IconScales /> Conforme RGPD</span>
+          </div>
         </div>
-        <p className="footer-legal">
-          Plaidezy est un outil d'assistance rédactionnelle. Il ne constitue pas un service juridique et ne remplace pas un avocat.
-          © {new Date().getFullYear()} Plaidezy. Tous droits réservés.
-        </p>
+
+        <div className="footer-col">
+          <h4>Guides populaires</h4>
+          {popularGuides.map((guide) => (
+            <a key={guide.slug} href={`#guide-${guide.slug}`}>{guide.title}</a>
+          ))}
+        </div>
+
+        <div className="footer-col">
+          <h4>Plaidezy</h4>
+          <a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Tous les guides</a>
+          <a href="#a-propos">À propos</a>
+          <a href="mailto:contact@plaidezy.com">Contact</a>
+        </div>
+
+        <div className="footer-col">
+          <h4>Légal</h4>
+          <a href="#mentions-legales">Mentions légales</a>
+          <a href="#cgv">CGV</a>
+          <a href="#confidentialite">Confidentialité</a>
+        </div>
       </div>
+      <p className="footer-legal footer-legal-rich">
+        Plaidezy est un outil d'assistance rédactionnelle. Il ne constitue pas un service juridique et ne remplace pas un avocat.
+        © {new Date().getFullYear()} Plaidezy. Tous droits réservés.
+      </p>
     </footer>
   );
 }

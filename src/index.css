@@ -3752,3 +3752,274 @@ input[type="number"]::-webkit-outer-spin-button {
 .guide-final-cta .btn-primary:hover {
   box-shadow: 0 10px 24px rgba(13, 148, 136, 0.28);
 }
+
+/* Navigation enrichie */
+.nav-links a.active,
+.mobile-nav a.active {
+  color: var(--primary-dark);
+  background: rgba(13, 148, 136, 0.09);
+}
+.nav-links a.active::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+/* Filtres guides */
+.guide-filter-bar {
+  max-width: 1120px;
+  margin: -18px auto 30px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.guide-filter-bar button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.guide-filter-bar button:hover,
+.guide-filter-bar button.active {
+  border-color: rgba(13, 148, 136, 0.25);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Breadcrumb + sommaire */
+.guide-breadcrumb {
+  max-width: 1120px;
+  margin: 0 auto 22px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-light);
+}
+.guide-breadcrumb a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.guide-breadcrumb a:hover {
+  color: var(--primary-dark);
+}
+.guide-breadcrumb strong {
+  color: var(--primary-dark);
+}
+.guide-reading-layout {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 860px);
+  gap: 28px;
+  align-items: start;
+}
+.guide-toc {
+  position: sticky;
+  top: 96px;
+}
+.guide-toc-card {
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.guide-toc-label {
+  display: block;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+}
+.guide-toc button {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 10px 10px;
+  border-radius: var(--radius-sm);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.35;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.guide-toc button:hover {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+.guide-article-content section,
+.guide-checklist,
+.guide-final-cta {
+  scroll-margin-top: 96px;
+}
+
+/* Guide précédent / suivant */
+.guide-next-prev {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 28px;
+}
+.guide-next-prev a {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 104px;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+.guide-next-prev a:hover {
+  transform: translateY(-2px);
+  border-color: rgba(13, 148, 136, 0.25);
+  box-shadow: var(--shadow-md);
+}
+.guide-next-prev a.next {
+  text-align: right;
+}
+.guide-next-prev span {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.guide-next-prev strong {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+/* Footer enrichi */
+footer .footer-rich {
+  max-width: 1120px;
+  display: grid;
+  grid-template-columns: 1.5fr 1.2fr 0.8fr 0.8fr;
+  align-items: start;
+  gap: 34px;
+  text-align: left;
+}
+.footer-brand-col p {
+  margin-top: 12px;
+  max-width: 360px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.footer-brand-col .footer-badges {
+  justify-content: flex-start;
+  margin-top: 18px;
+}
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-col h4 {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.footer-col a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+.footer-col a:hover {
+  color: var(--primary-dark);
+  transform: translateX(2px);
+}
+.footer-legal-rich {
+  margin: 28px auto 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 980px) {
+  .guide-reading-layout {
+    grid-template-columns: 1fr;
+  }
+  .guide-toc {
+    position: static;
+    order: -1;
+  }
+  .guide-toc-card {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+  .guide-toc-label {
+    grid-column: 1 / -1;
+  }
+  footer .footer-rich {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .guide-filter-bar {
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+  }
+  .guide-filter-bar button {
+    white-space: nowrap;
+  }
+  .guide-breadcrumb {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .guide-toc-card {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+  .guide-next-prev {
+    grid-template-columns: 1fr;
+  }
+  .guide-next-prev a.next {
+    text-align: left;
+  }
+  footer .footer-rich {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .footer-brand-col .footer-badges {
+    justify-content: flex-start;
+  }
+}
