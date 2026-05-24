@@ -220,6 +220,9 @@ CONSIGNES STRICTES
 - Pour un retard exprimé sous forme numérique, précise l’unité si elle est évidente depuis le champ, par exemple "60 minutes".
 - Utilise la formule d’appel française standard : "Madame, Monsieur," et non "Monsieur/Madame".
 - Ne promets jamais que l’utilisateur va gagner.
+- N’invente aucun préjudice concret non fourni : pas de planning perturbé, rendez-vous manqué, frais, stress, activité prévue ou conséquence personnelle si l’utilisateur ne l’a pas indiqué.
+- Ne dis pas que des pièces sont jointes si l’utilisateur n’a pas explicitement fourni de justificatifs ; écris plutôt que l’utilisateur les tient à disposition ou pourra les transmettre.
+- Évite les formulations subjectives excessives comme "inacceptable", sauf si le dossier le justifie clairement.
 - Ne dis jamais que tu es avocat.
 - Ne donne pas de conseils hors lettre.
 - Ne produis ni markdown, ni liste d’explications, ni commentaire avant/après.
@@ -234,7 +237,7 @@ STRUCTURE OBLIGATOIRE
 6. Rappel clair des faits.
 7. Fondement ou référence utile, formulé prudemment.
 8. Demande précise avec le montant/résultat estimé fourni, sans inventer de calcul.
-9. Liste courte des pièces jointes si les justificatifs sont évidents.
+9. Mention prudente des justificatifs : "Je tiens à votre disposition les justificatifs utiles" ou "Je peux transmettre..." plutôt que "je joins" si aucun fichier n’est réellement fourni.
 10. Délai de réponse raisonnable, généralement 15 jours.
 11. Réserve de recours amiable/médiation/juridiction compétente sans menace excessive.
 12. Formule de politesse.
@@ -262,7 +265,9 @@ COORDONNÉES : ${compactJson(personal)}
 RÈGLES DE RÉVISION
 - Corrige les maladresses et améliore le style.
 - Vérifie que la lettre ne contient pas de faits inventés.
-- Si un fait semble inventé ou non fourni, remplace-le par un placeholder entre crochets.
+- Si un fait semble inventé ou non fourni, supprime-le ou remplace-le par une formulation prudente.
+- Supprime toute conséquence personnelle non fournie : planning perturbé, rendez-vous, frais, stress, activité prévue, etc.
+- Remplace "je joins" par "je tiens à votre disposition" si aucun justificatif n’est explicitement fourni.
 - Si la lettre contient un placeholder de montant alors qu’un montant/résultat estimé est fourni, remplace le placeholder par ce montant/résultat.
 - Remplace "Monsieur/Madame" par "Madame, Monsieur,".
 - Ne supprime pas les informations importantes.
