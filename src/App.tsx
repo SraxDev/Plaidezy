@@ -44,6 +44,23 @@ const scrollTo = (id: string) => {
   });
 };
 
+const navigateToLandingSection = (id: string) => {
+  const runScroll = () => scrollTo(id);
+
+  // Si on est sur une page hash dédiée (#guides, #guide-..., pages légales),
+  // les sections de la landing ne sont pas montées dans le DOM. On revient
+  // d'abord sur la landing, puis on scrolle après le rendu React.
+  if (!document.getElementById(id)) {
+    window.history.pushState(null, "", window.location.pathname + window.location.search);
+    window.dispatchEvent(new Event("hashchange"));
+    setTimeout(runScroll, 80);
+    setTimeout(runScroll, 260);
+    return;
+  }
+
+  runScroll();
+};
+
 /* ─── SVG Icon helpers ─── */
 function IconPlane() {
   return <svg viewBox="0 0 24 24" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C20.9 6.1 22 4 22 4s-2.1 1.1-3.5 2.5L15 10l-8.2-1.8c-.4-.1-.8.1-1 .4L4 11l6 3 3 6 2.4-1.8c.3-.2.5-.6.4-1z"/><path d="M2 22l5-5M7 17l-2-2M9 19l-2-2"/></svg>;
@@ -132,10 +149,10 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
           Plaid<em>ezy</em>
         </a>
         <ul className="nav-links">
-          <li><a href="#services" onClick={(e) => { e.preventDefault(); scrollTo("services"); }}>Cas couverts</a></li>
-          <li><a href="#comment" onClick={(e) => { e.preventDefault(); scrollTo("comment"); }}>Comment ça marche</a></li>
+          <li><a href="#services" onClick={(e) => { e.preventDefault(); navigateToLandingSection("services"); }}>Cas couverts</a></li>
+          <li><a href="#comment" onClick={(e) => { e.preventDefault(); navigateToLandingSection("comment"); }}>Comment ça marche</a></li>
           <li><a href="#guides">Guides</a></li>
-          <li><a href="#faq" onClick={(e) => { e.preventDefault(); scrollTo("faq"); }}>FAQ</a></li>
+          <li><a href="#faq" onClick={(e) => { e.preventDefault(); navigateToLandingSection("faq"); }}>FAQ</a></li>
         </ul>
         <div className="nav-right" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <button className="nav-btn" onClick={onOpenWizard}>Démarrer — 9€</button>
@@ -146,10 +163,10 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
       </nav>
       {menuOpen && (
         <div className="mobile-nav">
-          <a href="#services" onClick={() => setMenuOpen(false)}>Cas couverts</a>
-          <a href="#comment" onClick={() => setMenuOpen(false)}>Comment ça marche</a>
+          <a href="#services" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("services"); }}>Cas couverts</a>
+          <a href="#comment" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("comment"); }}>Comment ça marche</a>
           <a href="#guides" onClick={() => setMenuOpen(false)}>Guides</a>
-          <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
+          <a href="#faq" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("faq"); }}>FAQ</a>
           <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Démarrer — 9€</button>
         </div>
       )}
