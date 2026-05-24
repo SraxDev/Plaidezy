@@ -16,12 +16,14 @@ function CustomSelect({
   placeholder,
   onChange,
   required,
+  className,
 }: {
   value: string;
   options: { value: string; label: string }[];
   placeholder: string;
   onChange: (val: string) => void;
   required?: boolean;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -38,7 +40,7 @@ function CustomSelect({
   const isEmpty = !value;
 
   return (
-    <div ref={ref} className="custom-select-root">
+    <div ref={ref} className={`${className ? `${className} ` : ""}custom-select-root${open ? " open" : ""}`}>
       <button
         type="button"
         className={`custom-select-trigger${isEmpty ? " empty" : ""}${open ? " open" : ""}`}
@@ -79,6 +81,183 @@ function CustomSelect({
     </div>
   );
 }
+
+/* ─── Custom Date Picker Component ─── */
+const DATE_MONTHS = [
+  "janvier", "février", "mars", "avril", "mai", "juin",
+  "juillet", "août", "septembre", "octobre", "novembre", "décembre",
+];
+const DATE_WEEK_DAYS = ["lu", "ma", "me", "je", "ve", "sa", "di"];
+
+function padDatePart(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function dateToIso(date: Date) {
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+}
+
+function parseIsoDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(year, month, day);
+
+  if (date.getFullYear() !== year || date.getMonth() !== month || date.getDate() !== day) {
+    return null;
+  }
+
+  return date;
+}
+
+function formatDateInput(value: string) {
+  const date = parseIsoDate(value);
+  if (!date) return "";
+  return `${padDatePart(date.getDate())}/${padDatePart(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+function isSameDay(a: Date | null, b: Date) {
+  return !!a && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function CustomDatePicker({
+  value,
+  placeholder = "jj/mm/aaaa",
+  onChange,
+  required,
+}: {
+  value: string;
+  placeholder?: string;
+  onChange: (val: string) => void;
+  required?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedDate = parseIsoDate(value);
+  const today = new Date();
+  const [viewDate, setViewDate] = useState<Date>(() => selectedDate || today);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) setViewDate(selectedDate || today);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, value]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("keydown", keyHandler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("keydown", keyHandler);
+    };
+  }, []);
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const firstWeekday = (firstDayOfMonth.getDay() + 6) % 7; // lundi = 0
+  const calendarStart = new Date(year, month, 1 - firstWeekday);
+  const days = Array.from({ length: 42 }, (_, i) => new Date(calendarStart.getFullYear(), calendarStart.getMonth(), calendarStart.getDate() + i));
+  const displayValue = formatDateInput(value);
+
+  const changeMonth = (delta: number) => {
+    setViewDate((current) => new Date(current.getFullYear(), current.getMonth() + delta, 1));
+  };
+
+  const selectDate = (date: Date) => {
+    onChange(dateToIso(date));
+    setOpen(false);
+  };
+
+  const selectToday = () => {
+    const now = new Date();
+    onChange(dateToIso(now));
+    setViewDate(now);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} className={`custom-date-root${open ? " open" : ""}`}>
+      <button
+        type="button"
+        className={`custom-date-trigger${!displayValue ? " empty" : ""}${open ? " open" : ""}`}
+        onClick={() => setOpen(!open)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-required={required}
+      >
+        <span>{displayValue || placeholder}</span>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="3" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="custom-date-dropdown" role="dialog" aria-label="Choisir une date">
+          <div className="custom-date-header">
+            <button type="button" className="custom-date-nav" onClick={() => changeMonth(-1)} aria-label="Mois précédent">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <div className="custom-date-current">
+              {DATE_MONTHS[month]} <span>{year}</span>
+            </div>
+            <button type="button" className="custom-date-nav" onClick={() => changeMonth(1)} aria-label="Mois suivant">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="custom-date-weekdays">
+            {DATE_WEEK_DAYS.map((day) => <span key={day}>{day}</span>)}
+          </div>
+
+          <div className="custom-date-grid">
+            {days.map((day) => {
+              const outside = day.getMonth() !== month;
+              const selected = isSameDay(selectedDate, day);
+              const currentToday = isSameDay(today, day);
+              return (
+                <button
+                  key={dateToIso(day)}
+                  type="button"
+                  className={`custom-date-day${outside ? " outside" : ""}${selected ? " selected" : ""}${currentToday ? " today" : ""}`}
+                  onClick={() => selectDate(day)}
+                  aria-pressed={selected}
+                >
+                  {day.getDate()}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="custom-date-footer">
+            <button type="button" className="custom-date-action" onClick={() => { onChange(""); setOpen(false); }}>
+              Effacer
+            </button>
+            <button type="button" className="custom-date-action primary" onClick={selectToday}>
+              Aujourd'hui
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /* ─── Toast Component ─── */
 function Toast({ visible, type, title, message, onClose }: { visible: boolean; type: 'success' | 'error' | 'info'; title: string; message: string; onClose: () => void }) {
@@ -577,12 +756,19 @@ export default function WizardModal({ onClose, onEligible, preselectedClaimId, i
                       {q.label}
                       {q.required && <span className="wizard-required">*</span>}
                     </label>
-                    <div className="wizard-field-box">
+                    <div className={`wizard-field-box${q.type === "select" || q.type === "date" ? " wizard-field-box--select" : ""}`}>
                       {q.type === "select" ? (
                         <CustomSelect
                           value={answers[q.id] || ""}
                           options={q.options || []}
                           placeholder="Sélectionner…"
+                          onChange={(val) => setAnswer(q.id, val)}
+                          required={q.required}
+                        />
+                      ) : q.type === "date" ? (
+                        <CustomDatePicker
+                          value={answers[q.id] || ""}
+                          placeholder="jj/mm/aaaa"
                           onChange={(val) => setAnswer(q.id, val)}
                           required={q.required}
                         />
