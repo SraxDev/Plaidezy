@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { MentionsLegales, CGV, Confidentialite, APropos, ContactAide } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
@@ -1113,6 +1114,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AppInner />
+      <Analytics />
     </ErrorBoundary>
   );
 }
