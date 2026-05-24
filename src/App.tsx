@@ -769,6 +769,64 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
   );
 }
 
+
+/* ─── UPCOMING CASES ─── */
+function UpcomingCasesSection() {
+  const upcoming = [
+    {
+      icon: "lock",
+      title: "Résiliation d’abonnement",
+      desc: "Salle de sport, box internet, assurance ou service en ligne qui continue à prélever.",
+      tag: "Très demandé",
+    },
+    {
+      icon: "package",
+      title: "Commande non reçue",
+      desc: "Achat en ligne jamais livré, vendeur qui tarde à rembourser ou avoir imposé.",
+      tag: "E-commerce",
+    },
+    {
+      icon: "send",
+      title: "Litige internet / téléphone",
+      desc: "Facturation abusive, résiliation non prise en compte ou panne prolongée.",
+      tag: "Opérateurs",
+    },
+  ];
+  const Icon = (name: string) => { const C = howIcons[name] || serviceIcons[name]; return C ? <C /> : <IconSearch />; };
+
+  return (
+    <section className="upcoming-section reveal" id="prochains-cas">
+      <div className="upcoming-inner">
+        <div className="upcoming-header">
+          <div>
+            <div className="section-label">Prochains cas</div>
+            <h2 className="section-h2">Bientôt plus de<br /><span className="green">situations couvertes.</span></h2>
+          </div>
+          <p>On préfère ajouter moins de cas, mais mieux les traiter. Ces demandes sont les prochaines priorités.</p>
+        </div>
+        <div className="upcoming-grid">
+          {upcoming.map((item, i) => (
+            <div className="upcoming-card" key={item.title} style={{ animationDelay: `${i * 0.08}s` }}>
+              <div className="upcoming-icon">{Icon(item.icon)}</div>
+              <span className="upcoming-tag">{item.tag}</span>
+              <h3>{item.title}</h3>
+              <p>{item.desc}</p>
+              <span className="upcoming-status">En préparation</span>
+            </div>
+          ))}
+        </div>
+        <div className="upcoming-vote">
+          <div>
+            <strong>Vous voulez un autre cas ?</strong>
+            <span>Dites-nous ce qu’il faudrait ajouter en priorité.</span>
+          </div>
+          <a href="mailto:contact@plaidezy.com?subject=Nouveau%20cas%20Plaidezy" className="upcoming-vote-btn">Proposer un cas</a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─── EMAIL SECTION ─── */
 function EmailSection() {
   const [email, setEmail] = useState("");
@@ -1008,6 +1066,7 @@ function AppInner() {
           <LetterPreviewSection onOpenWizard={openWizard} />
           <GuaranteesSection />
           <GuidesTeaserSection />
+          <UpcomingCasesSection />
           <FAQSection />
           <EmailSection />
           <CTASection onStart={openWizard} />
