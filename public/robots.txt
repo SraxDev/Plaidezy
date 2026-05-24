@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://plaidezy.com/sitemap.xml
+Sitemap: https://plaidezy.vercel.app/sitemap.xml

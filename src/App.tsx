@@ -1,12 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
-import WizardModal from "./components/WizardModal";
-import PaymentGate from "./components/PaymentGate";
-import LetterBuilder from "./components/LetterBuilder";
-import PaymentSuccess from "./components/PaymentSuccess";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { MentionsLegales, CGV, Confidentialite, APropos } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
 import { usePaymentReturn } from "./hooks/usePaymentReturn";
+
+const WizardModal = lazy(() => import("./components/WizardModal"));
+const PaymentGate = lazy(() => import("./components/PaymentGate"));
+const LetterBuilder = lazy(() => import("./components/LetterBuilder"));
+const PaymentSuccess = lazy(() => import("./components/PaymentSuccess"));
+
+function ModalLoading() {
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content" style={{ textAlign: "center", padding: "48px 32px" }}>
+        <div className="analysis-spinner" style={{ margin: "0 auto 16px", width: 24, height: 24, borderWidth: 3 }} />
+        <p style={{ color: "var(--muted)", fontSize: 14 }}>Chargement…</p>
+      </div>
+    </div>
+  );
+}
 
 const STORAGE_KEY = "plaidezy_session";
 
@@ -902,9 +914,15 @@ function AppInner() {
         </div>
       )}
 
-      {successOpen && !builderOpen && (
-        <PaymentSuccess onContinue={() => { setSuccessOpen(false); setBuilderOpen(true); }} />
-      )}
+      <Suspense fallback={<ModalLoading />}>
+        {successOpen && !builderOpen && (
+          <PaymentSuccess onContinue={() => { setSuccessOpen(false); setBuilderOpen(true); }} />
+        )}
+
+        {wizardOpen && <WizardModal onClose={closeWizard} onEligible={handleEligible} preselectedClaimId={preselectedClaimId} initialAnswers={claimAnswers} />}
+        {paymentOpen && selectedClaim && <PaymentGate claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onPaid={handlePaid} onClose={closePayment} onEdit={editAnswers} />}
+        {builderOpen && selectedClaim && <LetterBuilder claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onClose={closeBuilder} onEdit={editAnswers} />}
+      </Suspense>
 
       {paymentReturn.error && (
         <div className="modal-backdrop">
@@ -916,9 +934,6 @@ function AppInner() {
         </div>
       )}
 
-      {wizardOpen && <WizardModal onClose={closeWizard} onEligible={handleEligible} preselectedClaimId={preselectedClaimId} initialAnswers={claimAnswers} />}
-      {paymentOpen && selectedClaim && <PaymentGate claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onPaid={handlePaid} onClose={closePayment} onEdit={editAnswers} />}
-      {builderOpen && selectedClaim && <LetterBuilder claim={selectedClaim} answers={claimAnswers} amount={claimAmount} onClose={closeBuilder} onEdit={editAnswers} />}
     </>
   );
 }
