@@ -182,6 +182,7 @@ async function callGroq({ apiKey, model, messages, maxTokens, temperature, timeo
 
 function buildFullGenerationPrompt({ claimId, answers, personal }) {
   const config = getClaimConfig(claimId);
+  const calculatedAmount = cleanText(answers?._calculatedAmount || answers?.montant_estime || answers?.amount || "");
   return `Tu dois rédiger une lettre de réclamation complète, professionnelle et prête à envoyer.
 
 TYPE DE DOSSIER
@@ -202,6 +203,9 @@ ${compactJson(personal)}
 INFORMATIONS DU DOSSIER
 ${compactJson(answers)}
 
+MONTANT / RÉSULTAT ESTIMÉ PAR PLAIDEZY
+${calculatedAmount || "[aucun montant estimé fourni]"}
+
 RÉFÉRENCES ET RÈGLES UTILES
 ${config.legalBasis.map((x) => `- ${x}`).join("\n")}
 
@@ -212,6 +216,9 @@ CONSIGNES STRICTES
 - Rédige la lettre complète toi-même, de A à Z.
 - N’invente jamais de fait, de montant, de date, de justificatif ou de référence certaine non fournie.
 - Si une information manque, écris un placeholder clair entre crochets, par exemple [numéro de dossier] ou [adresse du destinataire].
+- Si un montant ou résultat estimé est fourni dans _calculatedAmount, utilise-le explicitement au lieu d’un placeholder.
+- Pour un retard exprimé sous forme numérique, précise l’unité si elle est évidente depuis le champ, par exemple "60 minutes".
+- Utilise la formule d’appel française standard : "Madame, Monsieur," et non "Monsieur/Madame".
 - Ne promets jamais que l’utilisateur va gagner.
 - Ne dis jamais que tu es avocat.
 - Ne donne pas de conseils hors lettre.
@@ -226,7 +233,7 @@ STRUCTURE OBLIGATOIRE
 5. Formule d’appel.
 6. Rappel clair des faits.
 7. Fondement ou référence utile, formulé prudemment.
-8. Demande précise avec montant si fourni ou estimable depuis les données.
+8. Demande précise avec le montant/résultat estimé fourni, sans inventer de calcul.
 9. Liste courte des pièces jointes si les justificatifs sont évidents.
 10. Délai de réponse raisonnable, généralement 15 jours.
 11. Réserve de recours amiable/médiation/juridiction compétente sans menace excessive.
@@ -244,16 +251,20 @@ Rédige maintenant uniquement la lettre finale.`;
 
 function buildReviewPrompt({ claimId, answers, personal, letter }) {
   const config = getClaimConfig(claimId);
+  const calculatedAmount = cleanText(answers?._calculatedAmount || answers?.montant_estime || answers?.amount || "");
   return `Relis et améliore cette lettre pour la rendre plus professionnelle, claire et juridiquement prudente.
 
 TYPE DE DOSSIER : ${config.label}
 DONNÉES DOSSIER : ${compactJson(answers)}
+MONTANT / RÉSULTAT ESTIMÉ : ${calculatedAmount || "[aucun montant estimé fourni]"}
 COORDONNÉES : ${compactJson(personal)}
 
 RÈGLES DE RÉVISION
 - Corrige les maladresses et améliore le style.
 - Vérifie que la lettre ne contient pas de faits inventés.
 - Si un fait semble inventé ou non fourni, remplace-le par un placeholder entre crochets.
+- Si la lettre contient un placeholder de montant alors qu’un montant/résultat estimé est fourni, remplace le placeholder par ce montant/résultat.
+- Remplace "Monsieur/Madame" par "Madame, Monsieur,".
 - Ne supprime pas les informations importantes.
 - Ne rajoute aucun commentaire, seulement la lettre finale.
 - Pas de markdown.
