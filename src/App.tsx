@@ -116,12 +116,13 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
     <>
       <a href="#main-content" className="skip-link">Aller au contenu principal</a>
       <nav className={`nav-bar${scrolled ? " scrolled" : ""}`} role="navigation" aria-label="Navigation principale">
-        <a href="/" className="logo" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+        <a href="/" className="logo" onClick={(e) => { e.preventDefault(); window.location.hash = ""; window.scrollTo({ top: 0, behavior: "smooth" }); }}>
           Plaid<em>ezy</em>
         </a>
         <ul className="nav-links">
           <li><a href="#services" onClick={(e) => { e.preventDefault(); scrollTo("services"); }}>Cas couverts</a></li>
           <li><a href="#comment" onClick={(e) => { e.preventDefault(); scrollTo("comment"); }}>Comment ça marche</a></li>
+          <li><a href="#guides">Guides</a></li>
           <li><a href="#faq" onClick={(e) => { e.preventDefault(); scrollTo("faq"); }}>FAQ</a></li>
         </ul>
         <div className="nav-right" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -135,6 +136,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
         <div className="mobile-nav">
           <a href="#services" onClick={() => setMenuOpen(false)}>Cas couverts</a>
           <a href="#comment" onClick={() => setMenuOpen(false)}>Comment ça marche</a>
+          <a href="#guides" onClick={() => setMenuOpen(false)}>Guides</a>
           <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
           <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Démarrer — 9€</button>
         </div>
@@ -457,6 +459,202 @@ function FAQSection() {
   );
 }
 
+
+type GuideArticle = {
+  slug: string;
+  claimId: string;
+  category: string;
+  icon: string;
+  title: string;
+  excerpt: string;
+  readTime: string;
+  intro: string;
+  sections: { title: string; body: string[] }[];
+  checklist: string[];
+};
+
+const guideArticles: GuideArticle[] = [
+  {
+    slug: "caution-non-rendue",
+    claimId: "caution",
+    category: "Logement",
+    icon: "🏠",
+    title: "Caution non rendue : délais, recours et lettre à envoyer",
+    excerpt: "Comprendre les délais de restitution, les retenues possibles et les étapes pour réclamer votre dépôt de garantie.",
+    readTime: "5 min",
+    intro: "Votre propriétaire ne vous a pas rendu votre dépôt de garantie ? Voici les règles essentielles à connaître avant d’envoyer une mise en demeure.",
+    sections: [
+      { title: "Quel est le délai de restitution ?", body: ["En pratique, le bailleur doit restituer le dépôt de garantie dans un délai qui dépend de l’état des lieux de sortie. Si aucune dégradation n’est constatée, le délai est généralement d’un mois. Si des retenues sont justifiées, le délai peut aller jusqu’à deux mois.", "Au-delà du délai applicable, une lettre de mise en demeure permet de formaliser votre demande et de fixer une date limite de réponse."] },
+      { title: "Quelles retenues sont possibles ?", body: ["Le propriétaire peut retenir des sommes uniquement si elles sont justifiées : réparations locatives, loyers impayés, charges régularisées ou dégradations constatées. Une retenue vague ou non documentée peut être contestée.", "Demandez toujours les justificatifs : devis, factures, état des lieux comparé, décompte des charges."] },
+      { title: "Quelle démarche effectuer ?", body: ["Commencez par une demande écrite claire. Si elle reste sans réponse, envoyez une mise en demeure par courrier recommandé avec accusé de réception. Cette étape prouve votre démarche amiable." ] },
+    ],
+    checklist: ["Bail", "État des lieux d’entrée et de sortie", "Preuve de remise des clés", "RIB", "Échanges avec le bailleur"],
+  },
+  {
+    slug: "vol-retarde-indemnisation",
+    claimId: "vol",
+    category: "Avion",
+    icon: "✈️",
+    title: "Vol retardé ou annulé : indemnisation, conditions et démarche",
+    excerpt: "Retard de plus de 3h, annulation ou surbooking : voyez quand demander jusqu’à 600€.",
+    readTime: "6 min",
+    intro: "Les passagers aériens disposent de droits encadrés, notamment pour les vols retardés, annulés ou en cas de refus d’embarquement.",
+    sections: [
+      { title: "Quand peut-on réclamer ?", body: ["Une indemnisation peut être envisageable si le vol arrive avec plus de 3 heures de retard, si l’annulation intervient tardivement ou si l’embarquement est refusé pour cause de surbooking.", "L’éligibilité dépend aussi du trajet, de la compagnie, de la distance et de l’existence éventuelle de circonstances extraordinaires." ] },
+      { title: "Quel montant demander ?", body: ["Le montant dépend en général de la distance du vol : 250€, 400€ ou 600€ par passager. Ce montant peut être réduit dans certains cas spécifiques.", "Il faut distinguer l’indemnisation forfaitaire du remboursement de frais ou du billet." ] },
+      { title: "Comment envoyer sa demande ?", body: ["Préparez les informations du vol, la date, les aéroports, la durée du retard et vos justificatifs. Une lettre structurée permet de citer les bons éléments et de demander une réponse dans un délai clair." ] },
+    ],
+    checklist: ["Confirmation de réservation", "Carte d’embarquement", "Preuve du retard / annulation", "Échanges avec la compagnie", "Justificatifs de frais si nécessaires"],
+  },
+  {
+    slug: "colis-perdu-remboursement",
+    claimId: "colis",
+    category: "Livraison",
+    icon: "📦",
+    title: "Colis perdu ou endommagé : qui doit rembourser et comment réclamer ?",
+    excerpt: "Transporteur, vendeur, preuve d’achat, photos : les bons réflexes pour réclamer efficacement.",
+    readTime: "5 min",
+    intro: "Un colis perdu, bloqué ou arrivé abîmé peut vite devenir frustrant. La clé est de documenter rapidement la situation.",
+    sections: [
+      { title: "Qui contacter ?", body: ["Selon votre situation, vous pouvez contacter le transporteur, le vendeur, ou les deux. Si vous avez acheté auprès d’un professionnel, le vendeur reste souvent votre interlocuteur principal pour la bonne livraison du produit." ] },
+      { title: "Quels délais respecter ?", body: ["Pour un colis endommagé, il faut agir vite : prenez des photos dès réception et signalez le problème immédiatement. Pour un colis perdu, surveillez le suivi et demandez une enquête au transporteur." ] },
+      { title: "Que demander ?", body: ["Selon le cas : remboursement, nouvelle expédition, indemnisation ou prise en charge. La demande doit rappeler le numéro de suivi, la date d’envoi et la valeur du colis." ] },
+    ],
+    checklist: ["Numéro de suivi", "Preuve d’achat", "Photos du colis", "Capture du suivi", "Échanges avec vendeur / transporteur"],
+  },
+  {
+    slug: "retard-sncf-g30",
+    claimId: "train",
+    category: "Train",
+    icon: "🚆",
+    title: "Retard SNCF / Eurostar : remboursement, Garantie G30 et réclamation",
+    excerpt: "Comprendre les seuils de retard, les justificatifs et la demande à envoyer.",
+    readTime: "4 min",
+    intro: "En cas de retard important, une compensation peut être possible selon le transporteur, le billet et la durée du retard.",
+    sections: [
+      { title: "À partir de quel retard demander ?", body: ["La Garantie G30 prévoit généralement une compensation à partir de 30 minutes de retard pour certains trains. Le montant dépend ensuite de la durée du retard et du prix du billet." ] },
+      { title: "Quelles informations réunir ?", body: ["Préparez le numéro du train, la date, les gares de départ et d’arrivée, la durée du retard et le prix du billet. Ces éléments permettent de formuler une demande précise." ] },
+      { title: "Comment formuler la réclamation ?", body: ["La lettre doit rappeler le trajet, le retard constaté, le montant demandé et les justificatifs joints. Conservez une copie de votre envoi." ] },
+    ],
+    checklist: ["Billet ou e-billet", "Numéro de train", "Justificatif de retard", "Reçu de paiement", "Échanges avec le transporteur"],
+  },
+  {
+    slug: "contester-amende-stationnement",
+    claimId: "parking",
+    category: "Stationnement",
+    icon: "🅿️",
+    title: "Amende de stationnement : comment contester efficacement ?",
+    excerpt: "Délais, motifs possibles et preuves à fournir pour contester un forfait ou une amende.",
+    readTime: "5 min",
+    intro: "Une amende ou un forfait post-stationnement peut être contesté si vous avez un motif sérieux et des preuves suffisantes.",
+    sections: [
+      { title: "Quels motifs peuvent être utiles ?", body: ["Signalisation absente ou ambiguë, horodateur en panne, paiement déjà effectué, erreur sur le véhicule ou situation particulière documentée : le motif doit être clair et prouvé." ] },
+      { title: "Quels délais respecter ?", body: ["Les délais de contestation sont stricts. Vérifiez l’avis reçu et agissez rapidement. Une contestation tardive peut être rejetée sans examen du fond." ] },
+      { title: "Comment augmenter ses chances ?", body: ["Joignez des preuves : photos, ticket, capture d’application, justificatif d’abonnement ou tout document montrant l’erreur. Restez factuel et concis." ] },
+    ],
+    checklist: ["Avis de contravention", "Ticket ou preuve de paiement", "Photos de la signalisation", "Capture de l’application", "Tout justificatif utile"],
+  },
+];
+
+function GuidesTeaserSection() {
+  return (
+    <section className="guides-section reveal" id="guides-preview">
+      <div className="guides-inner">
+        <div className="guides-header">
+          <div>
+            <div className="section-label">Guides pratiques</div>
+            <h2 className="section-h2">Comprendre vos droits<br /><span className="green">avant d’agir.</span></h2>
+          </div>
+          <p>Des conseils simples pour préparer vos justificatifs, éviter les erreurs et envoyer la bonne lettre.</p>
+        </div>
+        <div className="guides-grid">
+          {guideArticles.slice(0, 3).map((guide) => (
+            <a className="guide-card" href={`#guide-${guide.slug}`} key={guide.slug}>
+              <span className="guide-icon">{guide.icon}</span>
+              <span className="guide-category">{guide.category} · {guide.readTime}</span>
+              <h3>{guide.title}</h3>
+              <p>{guide.excerpt}</p>
+              <span className="guide-link">Lire le guide <IconArrowRight /></span>
+            </a>
+          ))}
+        </div>
+        <div className="guides-more-row">
+          <a className="btn-outline guides-more" href="#guides">Voir tous les guides</a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function GuidesPage({ onStartClaim }: { onStartClaim: (claimId: string) => void }) {
+  return (
+    <main className="guides-page" id="main-content">
+      <section className="guides-hero">
+        <div className="section-label" style={{ justifyContent: "center" }}>Guides & conseils</div>
+        <h1>Les bons réflexes pour<br /><span className="green">faire une réclamation.</span></h1>
+        <p>Délais, justificatifs, montants, erreurs à éviter : choisissez votre guide et générez ensuite une lettre adaptée à votre situation.</p>
+      </section>
+      <section className="guides-page-grid">
+        {guideArticles.map((guide) => (
+          <article className="guide-card guide-card-large" key={guide.slug}>
+            <div className="guide-card-top">
+              <span className="guide-icon">{guide.icon}</span>
+              <span className="guide-category">{guide.category} · {guide.readTime}</span>
+            </div>
+            <h2>{guide.title}</h2>
+            <p>{guide.excerpt}</p>
+            <div className="guide-actions">
+              <a className="guide-link" href={`#guide-${guide.slug}`}>Lire le guide <IconArrowRight /></a>
+              <button className="guide-mini-cta" onClick={() => onStartClaim(guide.claimId)}>Créer ma lettre</button>
+            </div>
+          </article>
+        ))}
+      </section>
+    </main>
+  );
+}
+
+function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: () => void }) {
+  return (
+    <main className="guide-article-page" id="main-content">
+      <a className="guide-back" href="#guides">← Tous les guides</a>
+      <article className="guide-article">
+        <header className="guide-article-header">
+          <span className="guide-icon big">{guide.icon}</span>
+          <span className="guide-category">{guide.category} · {guide.readTime}</span>
+          <h1>{guide.title}</h1>
+          <p>{guide.intro}</p>
+          <button className="btn-primary" onClick={onStart}>Générer ma lettre adaptée</button>
+        </header>
+
+        <div className="guide-article-content">
+          {guide.sections.map((section) => (
+            <section key={section.title}>
+              <h2>{section.title}</h2>
+              {section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+            </section>
+          ))}
+
+          <aside className="guide-checklist">
+            <h2>Justificatifs à préparer</h2>
+            <div>
+              {guide.checklist.map((item) => (
+                <span key={item}><IconCheck /> {item}</span>
+              ))}
+            </div>
+          </aside>
+
+          <section className="guide-final-cta">
+            <h2>Votre situation correspond ?</h2>
+            <p>Plaidezy génère une lettre personnalisée prête à envoyer, avec vos informations et les éléments utiles à votre cas.</p>
+            <button className="btn-primary" onClick={onStart}>Créer ma lettre — 9€</button>
+          </section>
+        </div>
+      </article>
+    </main>
+  );
+}
+
 /* ─── EMAIL SECTION ─── */
 function EmailSection() {
   const [email, setEmail] = useState("");
@@ -524,6 +722,7 @@ function FooterSection() {
         <div className="footer-logo">Plaid<em>ezy</em></div>
         <div className="footer-divider" />
         <ul className="footer-links">
+          <li><a href="#guides">Guides</a></li>
           <li><a href="#a-propos">À propos</a></li>
           <li><a href="#mentions-legales">Mentions légales</a></li>
           <li><a href="#cgv">CGV</a></li>
@@ -656,19 +855,33 @@ function AppInner() {
   if (hash === "#cgv") return <CGV />;
   if (hash === "#confidentialite") return <Confidentialite />;
 
+  const activeGuide = guideArticles.find((guide) => hash === `#guide-${guide.slug}`) || null;
+  const isGuidesRoute = hash === "#guides";
+
   return (
     <>
       <Navigation onOpenWizard={openWizard} />
-      <HeroSection onOpenWizard={openWizard} />
-      <div className="section-divider" />
-      <ServicesSection onSelectService={openWizardWithClaim} />
-      <VersusSection />
-      <HowItWorksSection />
-      <LetterPreviewSection onOpenWizard={openWizard} />
-      <GuaranteesSection />
-      <FAQSection />
-      <EmailSection />
-      <CTASection onStart={openWizard} />
+
+      {activeGuide ? (
+        <GuideArticlePage guide={activeGuide} onStart={() => openWizardWithClaim(activeGuide.claimId)} />
+      ) : isGuidesRoute ? (
+        <GuidesPage onStartClaim={openWizardWithClaim} />
+      ) : (
+        <>
+          <HeroSection onOpenWizard={openWizard} />
+          <div className="section-divider" />
+          <ServicesSection onSelectService={openWizardWithClaim} />
+          <VersusSection />
+          <HowItWorksSection />
+          <LetterPreviewSection onOpenWizard={openWizard} />
+          <GuaranteesSection />
+          <GuidesTeaserSection />
+          <FAQSection />
+          <EmailSection />
+          <CTASection onStart={openWizard} />
+        </>
+      )}
+
       <FooterSection />
       <MobileSticky onStart={openWizard} />
 
