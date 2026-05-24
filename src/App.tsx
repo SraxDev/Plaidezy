@@ -464,7 +464,7 @@ type GuideArticle = {
   slug: string;
   claimId: string;
   category: string;
-  icon: string;
+  iconKey: string;
   title: string;
   excerpt: string;
   readTime: string;
@@ -478,7 +478,7 @@ const guideArticles: GuideArticle[] = [
     slug: "caution-non-rendue",
     claimId: "caution",
     category: "Logement",
-    icon: "🏠",
+    iconKey: "home",
     title: "Caution non rendue : délais, recours et lettre à envoyer",
     excerpt: "Comprendre les délais de restitution, les retenues possibles et les étapes pour réclamer votre dépôt de garantie.",
     readTime: "5 min",
@@ -494,7 +494,7 @@ const guideArticles: GuideArticle[] = [
     slug: "vol-retarde-indemnisation",
     claimId: "vol",
     category: "Avion",
-    icon: "✈️",
+    iconKey: "plane",
     title: "Vol retardé ou annulé : indemnisation, conditions et démarche",
     excerpt: "Retard de plus de 3h, annulation ou surbooking : voyez quand demander jusqu’à 600€.",
     readTime: "6 min",
@@ -510,7 +510,7 @@ const guideArticles: GuideArticle[] = [
     slug: "colis-perdu-remboursement",
     claimId: "colis",
     category: "Livraison",
-    icon: "📦",
+    iconKey: "package",
     title: "Colis perdu ou endommagé : qui doit rembourser et comment réclamer ?",
     excerpt: "Transporteur, vendeur, preuve d’achat, photos : les bons réflexes pour réclamer efficacement.",
     readTime: "5 min",
@@ -526,7 +526,7 @@ const guideArticles: GuideArticle[] = [
     slug: "retard-sncf-g30",
     claimId: "train",
     category: "Train",
-    icon: "🚆",
+    iconKey: "train",
     title: "Retard SNCF / Eurostar : remboursement, Garantie G30 et réclamation",
     excerpt: "Comprendre les seuils de retard, les justificatifs et la demande à envoyer.",
     readTime: "4 min",
@@ -542,7 +542,7 @@ const guideArticles: GuideArticle[] = [
     slug: "contester-amende-stationnement",
     claimId: "parking",
     category: "Stationnement",
-    icon: "🅿️",
+    iconKey: "parking",
     title: "Amende de stationnement : comment contester efficacement ?",
     excerpt: "Délais, motifs possibles et preuves à fournir pour contester un forfait ou une amende.",
     readTime: "5 min",
@@ -556,6 +556,16 @@ const guideArticles: GuideArticle[] = [
   },
 ];
 
+function GuideVisualIcon({ iconKey, big = false }: { iconKey: string; big?: boolean }) {
+  const Icon = serviceIcons[iconKey];
+  const iconClass = serviceIconClass[iconKey] || "";
+  return (
+    <span className={`guide-icon ${iconClass}${big ? " big" : ""}`}>
+      {Icon ? <Icon /> : <IconSearch />}
+    </span>
+  );
+}
+
 function GuidesTeaserSection() {
   return (
     <section className="guides-section reveal" id="guides-preview">
@@ -565,12 +575,12 @@ function GuidesTeaserSection() {
             <div className="section-label">Guides pratiques</div>
             <h2 className="section-h2">Comprendre vos droits<br /><span className="green">avant d’agir.</span></h2>
           </div>
-          <p>Des conseils simples pour préparer vos justificatifs, éviter les erreurs et envoyer la bonne lettre.</p>
+          <p>Des explications simples pour comprendre les délais, les justificatifs et les démarches avant d’envoyer une réclamation.</p>
         </div>
         <div className="guides-grid">
           {guideArticles.slice(0, 3).map((guide) => (
             <a className="guide-card" href={`#guide-${guide.slug}`} key={guide.slug}>
-              <span className="guide-icon">{guide.icon}</span>
+              <GuideVisualIcon iconKey={guide.iconKey} />
               <span className="guide-category">{guide.category} · {guide.readTime}</span>
               <h3>{guide.title}</h3>
               <p>{guide.excerpt}</p>
@@ -586,26 +596,25 @@ function GuidesTeaserSection() {
   );
 }
 
-function GuidesPage({ onStartClaim }: { onStartClaim: (claimId: string) => void }) {
+function GuidesPage() {
   return (
     <main className="guides-page" id="main-content">
       <section className="guides-hero">
         <div className="section-label" style={{ justifyContent: "center" }}>Guides & conseils</div>
         <h1>Les bons réflexes pour<br /><span className="green">faire une réclamation.</span></h1>
-        <p>Délais, justificatifs, montants, erreurs à éviter : choisissez votre guide et générez ensuite une lettre adaptée à votre situation.</p>
+        <p>Délais, justificatifs, montants, erreurs à éviter : choisissez un guide et avancez étape par étape, sans jargon.</p>
       </section>
       <section className="guides-page-grid">
         {guideArticles.map((guide) => (
           <article className="guide-card guide-card-large" key={guide.slug}>
             <div className="guide-card-top">
-              <span className="guide-icon">{guide.icon}</span>
+              <GuideVisualIcon iconKey={guide.iconKey} />
               <span className="guide-category">{guide.category} · {guide.readTime}</span>
             </div>
             <h2>{guide.title}</h2>
             <p>{guide.excerpt}</p>
             <div className="guide-actions">
               <a className="guide-link" href={`#guide-${guide.slug}`}>Lire le guide <IconArrowRight /></a>
-              <button className="guide-mini-cta" onClick={() => onStartClaim(guide.claimId)}>Créer ma lettre</button>
             </div>
           </article>
         ))}
@@ -620,11 +629,10 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
       <a className="guide-back" href="#guides">← Tous les guides</a>
       <article className="guide-article">
         <header className="guide-article-header">
-          <span className="guide-icon big">{guide.icon}</span>
+          <GuideVisualIcon iconKey={guide.iconKey} big />
           <span className="guide-category">{guide.category} · {guide.readTime}</span>
           <h1>{guide.title}</h1>
           <p>{guide.intro}</p>
-          <button className="btn-primary" onClick={onStart}>Générer ma lettre adaptée</button>
         </header>
 
         <div className="guide-article-content">
@@ -645,9 +653,9 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
           </aside>
 
           <section className="guide-final-cta">
-            <h2>Votre situation correspond ?</h2>
-            <p>Plaidezy génère une lettre personnalisée prête à envoyer, avec vos informations et les éléments utiles à votre cas.</p>
-            <button className="btn-primary" onClick={onStart}>Créer ma lettre — 9€</button>
+            <h2>Prêt à préparer votre courrier ?</h2>
+            <p>Si votre situation correspond au guide, vous pouvez utiliser Plaidezy pour structurer une lettre personnalisée à partir de vos réponses.</p>
+            <button className="btn-primary" onClick={onStart}>Préparer ma lettre</button>
           </section>
         </div>
       </article>
@@ -865,7 +873,7 @@ function AppInner() {
       {activeGuide ? (
         <GuideArticlePage guide={activeGuide} onStart={() => openWizardWithClaim(activeGuide.claimId)} />
       ) : isGuidesRoute ? (
-        <GuidesPage onStartClaim={openWizardWithClaim} />
+        <GuidesPage />
       ) : (
         <>
           <HeroSection onOpenWizard={openWizard} />
