@@ -8,9 +8,28 @@ interface LetterBuilderProps {
   answers: Record<string, string>;
   amount: string;
   onClose: () => void;
+  onEdit?: () => void;
 }
 
-export default function LetterBuilder({ claim, answers, onClose }: LetterBuilderProps) {
+
+const evidenceByClaim: Record<string, string[]> = {
+  vol: ["Billet ou confirmation de réservation", "Carte d’embarquement si disponible", "Preuve du retard / annulation", "Échanges avec la compagnie"],
+  train: ["Billet ou e-billet", "Justificatif ou capture du retard", "Reçu de paiement", "Échanges avec SNCF / Eurostar"],
+  colis: ["Numéro de suivi", "Preuve d’achat ou facture", "Photos du colis si endommagé", "Échanges avec le transporteur"],
+  parking: ["Avis de contravention", "Justificatif de paiement si disponible", "Photos de la signalisation / horodateur", "Tout document utile au recours"],
+  caution: ["Bail", "État des lieux d’entrée et de sortie", "Preuve de remise des clés", "RIB et échanges avec le bailleur"],
+};
+
+const nextStepsByClaim: Record<string, string[]> = {
+  vol: ["Envoyez la lettre au service client de la compagnie.", "Joignez votre billet et la preuve du retard ou de l’annulation.", "Sans réponse, contactez le médiateur tourisme et voyage."],
+  train: ["Envoyez la demande via le formulaire SNCF / Eurostar ou par email.", "Joignez le billet et le justificatif de retard.", "Conservez une copie de votre demande."],
+  colis: ["Envoyez la lettre au transporteur et au vendeur si nécessaire.", "Joignez le suivi, la facture et les photos.", "Sans réponse, relancez puis contactez le médiateur compétent."],
+  parking: ["Respectez le délai indiqué sur l’avis de contravention.", "Joignez vos preuves et gardez une copie du recours.", "Envoyez via le canal officiel indiqué sur l’avis."],
+  caution: ["Envoyez la lettre en recommandé avec accusé de réception.", "Joignez l’état des lieux et la preuve de remise des clés.", "Sans réponse, vous pouvez saisir la commission départementale de conciliation."],
+};
+
+
+export default function LetterBuilder({ claim, answers, onClose, onEdit }: LetterBuilderProps) {
   const [personal, setPersonal] = useState<PersonalInfo>(() => {
     try {
       const saved = localStorage.getItem("plaidezy_session");
@@ -23,6 +42,17 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     try {
       const saved = localStorage.getItem("plaidezy_session");
       if (saved) { const session = JSON.parse(saved); if (session.letterText) return session.letterText; }
+    } catch { /* noop */ }
+    return "";
+  });
+
+  const [originalLetterText, setOriginalLetterText] = useState(() => {
+    try {
+      const saved = localStorage.getItem("plaidezy_session");
+      if (saved) {
+        const session = JSON.parse(saved);
+        return session.originalLetterText || session.letterText || "";
+      }
     } catch { /* noop */ }
     return "";
   });
@@ -52,6 +82,30 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   const trapRef = useFocusTrap(true);
 
   const isFormValid = personal.fullName.trim() && personal.address.trim() && personal.city.trim() && personal.email.trim();
+  const isEdited = !!letterText && !!originalLetterText && letterText !== originalLetterText;
+
+  const saveLetterToSession = (nextLetter: string, nextOriginal = originalLetterText) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
+      localStorage.setItem("plaidezy_session", JSON.stringify({
+        ...saved,
+        letterText: nextLetter,
+        originalLetterText: nextOriginal || nextLetter,
+        step: "builder-unlocked",
+      }));
+    } catch { /* noop */ }
+  };
+
+  const handleLetterChange = (nextLetter: string) => {
+    setLetterText(nextLetter);
+    saveLetterToSession(nextLetter);
+  };
+
+  const handleRestoreOriginal = () => {
+    if (!originalLetterText) return;
+    setLetterText(originalLetterText);
+    saveLetterToSession(originalLetterText, originalLetterText);
+  };
 
   const generateWithAI = async (promoCodeOverride?: string) => {
     setGenerating(true); setError(""); setLetterText("");
@@ -76,10 +130,11 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
       if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
       if (!data.letter) throw new Error("Réponse vide du serveur");
       setLetterText(data.letter);
+      setOriginalLetterText(data.letter);
       setLocked(false);
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, ...(activePromo ? { promoCode: activePromo } : {}), step: "builder-unlocked" }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, originalLetterText: data.letter, ...(activePromo ? { promoCode: activePromo } : {}), step: "builder-unlocked" }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors de la génération");
@@ -100,10 +155,11 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
       if (!data.letter) throw new Error("Réponse vide du serveur");
       setPromoSuccess(true);
       setLetterText(data.letter);
+      setOriginalLetterText(data.letter);
       setLocked(false);
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, promoCode: promoCode.trim(), step: "builder-unlocked" }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, originalLetterText: data.letter, promoCode: promoCode.trim(), step: "builder-unlocked" }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setPromoError(e instanceof Error ? e.message : "Erreur lors de la vérification");
@@ -123,7 +179,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
       try {
         localStorage.setItem("plaidezy_session", JSON.stringify({
           claimId: claim.id, answers, amount: claim.calculateAmount(answers),
-          step: "builder", letterText, personal, checkoutRef: data.checkoutReference,
+          step: "builder", letterText, originalLetterText, personal, checkoutRef: data.checkoutReference,
         }));
       } catch { /* noop */ }
       window.location.href = data.hostedCheckoutUrl;
@@ -192,6 +248,20 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     }, 400);
   };
 
+  const handleWordDownload = () => {
+    if (!letterText) return;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Lettre Plaidezy</title></head><body style="font-family: Arial, sans-serif; line-height: 1.6; white-space: pre-wrap;">${letterText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body></html>`;
+    const blob = new Blob([html], { type: "application/msword;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `lettre_${claim.id}_${Date.now()}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const personalFields: { id: keyof PersonalInfo; label: string; placeholder: string; fullWidth?: boolean }[] = [
     { id: "fullName", label: "Nom complet", placeholder: "Ex: Jean Dupont", fullWidth: true },
     { id: "address", label: "Adresse", placeholder: "Ex: 12 rue de la Paix" },
@@ -203,6 +273,8 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
     label: q.label,
     value: answers[q.id] || "—",
   }));
+  const evidenceItems = evidenceByClaim[claim.id] || ["Justificatifs liés à votre situation", "Preuve de paiement si applicable", "Échanges avec l’entreprise"];
+  const nextSteps = nextStepsByClaim[claim.id] || ["Envoyez la lettre avec les justificatifs utiles.", "Conservez une preuve d’envoi.", "Relancez si vous n’obtenez pas de réponse."];
 
   return (
     <div className="modal-backdrop">
@@ -231,6 +303,22 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
               }}>
                 <span style={{ fontSize: 12, color: "var(--muted)" }}>{item.label}</span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink2)" }}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {onEdit && locked && (
+            <button className="wizard-btn-back" onClick={onEdit} style={{ width: "100%", marginBottom: 16, justifyContent: "center" }}>
+              Modifier mes réponses
+            </button>
+          )}
+
+          <div style={{ background: "var(--primary-light)", border: "1px solid rgba(13,148,136,0.18)", borderRadius: 10, padding: 14, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", marginBottom: 8 }}>Justificatifs conseillés</h3>
+            {evidenceItems.map((item) => (
+              <div key={item} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 700 }}>{item}</span>
               </div>
             ))}
           </div>
@@ -298,22 +386,72 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
           {letterText && (
             <div style={{ marginTop: 20 }}>
               <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
-                {locked ? "Aperçu verrouillé" : "Votre lettre"}
+                {locked ? "Aperçu verrouillé" : "Votre lettre modifiable"}
               </h3>
-              <div
-                ref={previewRef}
-                style={{
-                  background: "var(--surface)", border: "1px solid var(--border)",
-                  borderRadius: 10, padding: 20,
-                  maxHeight: 260, overflow: "hidden",
-                  position: "relative",
-                  fontSize: 13, lineHeight: 1.75, color: "var(--ink2)",
-                  whiteSpace: "pre-wrap", fontFamily: "'Inter', sans-serif",
-                  ...(locked ? { filter: "blur(3px)", userSelect: "none" as const } : {}),
-                }}
-              >
-                {letterText}
-              </div>
+              {locked ? (
+                <div
+                  ref={previewRef}
+                  style={{
+                    background: "var(--surface)", border: "1px solid var(--border)",
+                    borderRadius: 10, padding: 20,
+                    maxHeight: 260, overflow: "hidden",
+                    position: "relative",
+                    fontSize: 13, lineHeight: 1.75, color: "var(--ink2)",
+                    whiteSpace: "pre-wrap", fontFamily: "'Inter', sans-serif",
+                    filter: "blur(3px)", userSelect: "none" as const,
+                  }}
+                >
+                  {letterText}
+                </div>
+              ) : (
+                <div>
+                  <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 10, marginBottom: 10, flexWrap: "wrap",
+                  }}>
+                    <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>
+                      Relisez et modifiez la lettre si nécessaire. Le PDF et le Word utiliseront cette version.
+                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {isEdited && <span style={{ fontSize: 11, fontWeight: 800, color: "var(--primary)", background: "var(--primary-light)", padding: "5px 8px", borderRadius: 999 }}>Modifiée</span>}
+                      <button
+                        className="wizard-btn-back"
+                        onClick={handleRestoreOriginal}
+                        disabled={!isEdited}
+                        style={{ padding: "8px 10px", fontSize: 12 }}
+                      >
+                        Restaurer l’IA
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    className="wizard-textarea letter-editor"
+                    value={letterText}
+                    onChange={(e) => handleLetterChange(e.target.value)}
+                    spellCheck
+                    style={{
+                      width: "100%",
+                      minHeight: 360,
+                      maxHeight: 520,
+                      overflowY: "auto",
+                      background: "var(--surface)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 10,
+                      padding: 20,
+                      fontSize: 13,
+                      lineHeight: 1.75,
+                      color: "var(--ink2)",
+                      whiteSpace: "pre-wrap",
+                      fontFamily: "'Manrope', sans-serif",
+                      resize: "vertical",
+                    }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 8, fontSize: 11, color: "var(--light)", fontWeight: 700 }}>
+                    <span>{letterText.length.toLocaleString("fr-FR")} caractères</span>
+                    <span>Sauvegarde automatique</span>
+                  </div>
+                </div>
+              )}
 
               {locked && (
                 <div style={{
@@ -391,15 +529,21 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
                 background: "var(--primary-light)", border: "1px solid rgba(13,148,136,0.18)",
                 borderRadius: 10, padding: 14, marginTop: 16,
               }}>
-                <h4 style={{ fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", marginBottom: 6 }}>Conseils d'envoi</h4>
-                <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                  Relisez la lettre, ajoutez vos justificatifs utiles puis envoyez-la par email ou courrier recommandé selon votre situation. Conservez toujours une preuve d'envoi.
-                </p>
+                <h4 style={{ fontSize: 13, fontWeight: 800, color: "var(--primary-dark)", marginBottom: 8 }}>Prochaines étapes</h4>
+                {nextSteps.map((step, i) => (
+                  <div key={step} style={{ display: "flex", gap: 8, padding: "4px 0", fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                    <strong style={{ color: "var(--primary-dark)" }}>{i + 1}.</strong>
+                    <span>{step}</span>
+                  </div>
+                ))}
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
                 <button className="wizard-btn-back" onClick={onClose} style={{ flex: 0 }}>Fermer</button>
                 <button className="wizard-btn-back" onClick={handleCopy} style={{ flex: 1 }}>
                   {copied ? "✓ Copiée" : "Copier la lettre"}
+                </button>
+                <button className="wizard-btn-back" onClick={handleWordDownload} style={{ flex: 1 }}>
+                  Télécharger Word
                 </button>
                 <button
                   className="wizard-btn-next"
