@@ -187,7 +187,7 @@ function CGVContent() {
         <p>Plaidezy propose :</p>
         <ul style={{ paddingLeft: 20, marginTop: 8 }}>
           <li>Une vérification gratuite de l'éligibilité du dossier</li>
-          <li>La génération d'une lettre juridique personnalisée au format PDF, au tarif de 9€ TTC</li>
+          <li>La génération d'une lettre de réclamation personnalisée au format PDF, au tarif de 9€ TTC</li>
         </ul>
       </Section>
 
@@ -287,8 +287,45 @@ function ConfidentialiteContent() {
   );
 }
 
+
+function ContactAideContent() {
+  return (
+    <div>
+      <h1 style={{
+        fontFamily: "'Playfair Display', serif",
+        fontSize: 32, fontWeight: 700, color: "var(--ink)",
+        marginBottom: 6, letterSpacing: -1,
+      }}>
+        Aide & contact
+      </h1>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Une question avant ou après la génération de votre lettre ?</p>
+
+      <Section title="Nous contacter">
+        <p>Pour toute question, demande de remboursement ou problème technique, vous pouvez nous écrire à :</p>
+        <p style={{ marginTop: 10 }}><a href="mailto:contact@plaidezy.com" style={linkStyle}>contact@plaidezy.com</a></p>
+        <p style={{ marginTop: 10 }}>Nous faisons notre possible pour répondre sous 24h ouvrées.</p>
+      </Section>
+
+      <Section title="Avant de nous écrire">
+        <ul style={{ paddingLeft: 20 }}>
+          <li>Vérifiez que vos réponses dans le wizard sont exactes.</li>
+          <li>Conservez votre référence de paiement si vous avez réglé votre lettre.</li>
+          <li>Expliquez brièvement le cas concerné : vol, train, colis, caution ou amende.</li>
+        </ul>
+      </Section>
+
+      <Section title="Rappel important">
+        <p>Plaidezy est un outil d'assistance rédactionnelle. Il ne remplace pas un avocat et ne constitue pas un conseil personnalisé. Pour une situation complexe ou urgente, consultez un professionnel du droit.</p>
+      </Section>
+    </div>
+  );
+}
+
 /* ───────── Exports avec Layout ───────── */
 
+export function ContactAide() {
+  return <LegalLayout><ContactAideContent /></LegalLayout>;
+}
 export function APropos() {
   return <LegalLayout><AProposContent /></LegalLayout>;
 }

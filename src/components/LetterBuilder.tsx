@@ -240,7 +240,7 @@ export default function LetterBuilder({ claim, answers, onClose, onEdit }: Lette
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 160);
-        doc.text("Généré par Plaidezy — Lettre juridique personnalisée", pageWidth / 2, pageHeight - 10, { align: "center" });
+        doc.text("Généré par Plaidezy — Lettre de réclamation personnalisée", pageWidth / 2, pageHeight - 10, { align: "center" });
       }
 
       doc.save(`lettre_${claim.id}_${Date.now()}.pdf`);
@@ -356,9 +356,15 @@ export default function LetterBuilder({ claim, answers, onClose, onEdit }: Lette
                   L'IA rédige votre lettre…
                 </span>
               ) : (
-                <>Générer ma lettre avec l'IA ⚡</>
+                <>Générer ma lettre personnalisée</>
               )}
             </button>
+          )}
+
+          {!letterText && (
+            <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", marginTop: 10, marginBottom: 8, fontWeight: 700 }}>
+              Rédaction assistée par IA à partir de vos réponses.
+            </p>
           )}
 
           {!letterText && (

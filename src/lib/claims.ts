@@ -576,7 +576,7 @@ ${p.fullName}`;
 export function getAnalysisSteps(claimId: string) {
   const claim = claimTypes.find((c) => c.id === claimId);
   return [
-    { label: "Identification du cadre juridique", sub: claim?.law || "Analyse..." },
+    { label: "Identification du cadre applicable", sub: claim?.law || "Analyse..." },
     { label: "Vérification des conditions d'éligibilité", sub: "Analyse de votre situation" },
     { label: "Calcul de l'indemnisation", sub: "Estimation en cours…" },
     { label: "Rédaction des arguments légaux", sub: "Génération du dossier…" },

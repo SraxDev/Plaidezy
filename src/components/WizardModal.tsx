@@ -968,7 +968,7 @@ export default function WizardModal({ onClose, onEligible, preselectedClaimId, i
                       {selectedClaim.law}
                     </div>
                     <p className="result-desc" style={{ fontFamily: "'Manrope', sans-serif", fontSize: 15, lineHeight: 1.7, color: 'var(--text-muted)', marginBottom: 24 }}>
-                      {eligibility.reason || "Vous êtes éligible à une réclamation. Générez votre lettre juridique personnalisée."}
+                      {eligibility.reason || "Vous êtes éligible à une réclamation. Générez votre lettre de réclamation personnalisée."}
                     </p>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 20 }}>
                       <div style={{

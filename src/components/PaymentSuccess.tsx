@@ -6,9 +6,9 @@ interface PaymentSuccessProps {
 }
 
 const steps = [
-  { icon: "💳", label: "Paiement reçu" },
-  { icon: "⚡", label: "Lettre en cours" },
-  { icon: "📄", label: "PDF prêt" },
+  { icon: "1", label: "Paiement reçu" },
+  { icon: "2", label: "Lettre en cours" },
+  { icon: "3", label: "PDF prêt" },
 ];
 
 export default function PaymentSuccess({ onContinue }: PaymentSuccessProps) {
@@ -77,7 +77,7 @@ export default function PaymentSuccess({ onContinue }: PaymentSuccessProps) {
         <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.65, marginBottom: 28 }}>
           Merci ! Votre paiement de{" "}
           <strong style={{ color: "var(--ink)" }}>9€</strong>{" "}
-          a bien été reçu. Renseignez vos coordonnées pour générer votre lettre juridique personnalisée.
+          a bien été reçu. Renseignez vos coordonnées pour générer votre lettre de réclamation personnalisée.
         </p>
 
         {/* Stepper */}

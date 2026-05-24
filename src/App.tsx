@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { MentionsLegales, CGV, Confidentialite, APropos } from "./components/LegalPages";
+import { MentionsLegales, CGV, Confidentialite, APropos, ContactAide } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
 import { usePaymentReturn } from "./hooks/usePaymentReturn";
 
@@ -171,7 +171,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
           <li><a href="#faq" onClick={(e) => { e.preventDefault(); navigateToLandingSection("faq"); }}>FAQ</a></li>
         </ul>
         <div className="nav-right" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <button className="nav-btn" onClick={onOpenWizard}>Démarrer — 9€</button>
+          <button className="nav-btn" onClick={onOpenWizard}>Vérifier mon droit</button>
           <button className={`hamburger${menuOpen ? " open" : ""}`} onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu" aria-expanded={menuOpen}>
             <span /><span /><span />
           </button>
@@ -183,7 +183,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
           <a href="#comment" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("comment"); }}>Comment ça marche</a>
           <a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToHashPage("#guides"); }}>Guides</a>
           <a href="#faq" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("faq"); }}>FAQ</a>
-          <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Démarrer — 9€</button>
+          <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Vérifier mon droit</button>
         </div>
       )}
     </>
@@ -211,12 +211,13 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
           Réclamez ce qui<br />vous <span className="green">appartient.</span>
         </h1>
         <p className="hero-desc">
-          Vol annulé, amende injuste, caution bloquée — Plaidezy génère votre lettre juridique en 2 minutes. Pas de commission sur vos gains.
+          Vol annulé, amende injuste, caution bloquée — Plaidezy génère votre lettre de réclamation en 2 minutes. Pas de commission sur vos gains.
         </p>
         <div className="hero-actions">
           <button className="btn-primary" onClick={onOpenWizard}>Vérifier mon droit gratuitement</button>
           <button className="btn-outline" onClick={() => scrollTo("services")}>Voir les cas</button>
         </div>
+        <p className="hero-microcopy">Aucune carte bancaire demandée pour vérifier votre situation.</p>
         <div className="hero-trust">
           {["Vérification gratuite", "9€ fixe si éligible", "Satisfait ou remboursé"].map((t, i) => (
             <span key={i} style={{ display: "contents" }}>
@@ -361,7 +362,7 @@ function VersusSection() {
 /* ─── HOW IT WORKS ─── */
 function HowItWorksSection() {
   const steps = [
-    { num: "01", icon: "search", title: "Décrivez votre situation", desc: "En quelques mots, sans jargon juridique.", badge: "Gratuit" },
+    { num: "01", icon: "search", title: "Décrivez votre situation", desc: "En quelques mots, sans jargon.", badge: "Gratuit" },
     { num: "02", icon: "zap", title: "Évaluation de votre situation", desc: "On vérifie automatiquement les critères applicables à votre cas.", badge: "< 30 sec" },
     { num: "03", icon: "lock", title: "Payez si éligible", desc: "9€ uniquement si vous avez un droit à faire valoir.", badge: "9€" },
     { num: "04", icon: "send", title: "Recevez votre lettre", desc: "PDF prêt à envoyer avec les articles de loi exacts.", badge: "2 min" },
@@ -391,7 +392,7 @@ function HowItWorksSection() {
 
 /* ─── LETTER PREVIEW ─── */
 function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
-  const checkItems = ["Articles de loi exacts (numéro, alinéa)", "Délai de réponse imposé à l'entreprise", "Montant précis réclamé selon votre cas", "Ton juridique professionnel", "PDF prêt à envoyer"];
+  const checkItems = ["Articles de loi exacts (numéro, alinéa)", "Délai de réponse imposé à l'entreprise", "Montant précis réclamé selon votre cas", "Ton professionnel et adapté", "PDF prêt à envoyer"];
   return (
     <section className="letter-section reveal" id="lettre">
       <div className="letter-inner">
@@ -588,7 +589,7 @@ const guideArticles: GuideArticle[] = [
     claimId: "parking",
     category: "Stationnement",
     iconKey: "parking",
-    title: "Amende de stationnement : comment contester efficacement ?",
+    title: "Amende de stationnement : délais, preuves et recours",
     excerpt: "Délais, motifs possibles et preuves à fournir pour contester un forfait ou une amende.",
     readTime: "5 min",
     intro: "Une amende ou un forfait post-stationnement peut être contesté si vous avez un motif sérieux et des preuves suffisantes.",
@@ -819,7 +820,7 @@ function CTASection({ onStart }: { onStart: () => void }) {
           <p>Vérification gratuite. 9€ uniquement si vous êtes éligible.</p>
         </div>
         <div className="cta-right">
-          <button className="btn-cta" onClick={onStart}>Vérifier mon droit — gratuit</button>
+          <button className="btn-cta" onClick={onStart}>Vérifier mon droit gratuitement</button>
           <span className="cta-micro">9€ fixe · Zéro commission · Remboursé 7j</span>
         </div>
       </div>
@@ -853,7 +854,7 @@ function FooterSection() {
           <h4>Plaidezy</h4>
           <a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Tous les guides</a>
           <a href="#a-propos">À propos</a>
-          <a href="mailto:contact@plaidezy.com">Contact</a>
+          <a href="#aide">Aide / Contact</a>
         </div>
 
         <div className="footer-col">
@@ -864,7 +865,7 @@ function FooterSection() {
         </div>
       </div>
       <p className="footer-legal footer-legal-rich">
-        Plaidezy est un outil d'assistance rédactionnelle. Il ne constitue pas un service juridique et ne remplace pas un avocat.
+        Plaidezy est un outil d'assistance rédactionnelle. Il ne constitue pas un conseil personnalisé et ne remplace pas un avocat.
         © {new Date().getFullYear()} Plaidezy. Tous droits réservés.
       </p>
     </footer>
@@ -980,6 +981,7 @@ function AppInner() {
     return () => window.removeEventListener("hashchange", handler);
   }, []);
 
+  if (hash === "#aide") return <ContactAide />;
   if (hash === "#a-propos") return <APropos />;
   if (hash === "#mentions-legales") return <MentionsLegales />;
   if (hash === "#cgv") return <CGV />;

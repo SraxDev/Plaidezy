@@ -33,7 +33,7 @@ export default async function handler(req, res) {
         amount: 9.0,
         checkout_reference: ref,
         currency: "EUR",
-        description: "Plaidezy — Lettre juridique personnalisée",
+        description: "Plaidezy — Lettre de réclamation personnalisée",
         merchant_code: SUMUP_MERCHANT,
         redirect_url: `${baseUrl}/?payment_success=${ref}`,
         hosted_checkout: { enabled: true },

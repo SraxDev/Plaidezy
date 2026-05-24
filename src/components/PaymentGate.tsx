@@ -165,6 +165,14 @@ export default function PaymentGate({ claim, answers, amount, onPaid, onClose, o
         <div className="modal-body">
           <h2 className="wizard-title">Générer ma lettre prête à envoyer</h2>
           <p className="wizard-subtitle">Paiement unique de 9€ · Aucun abonnement · Zéro commission</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", margin: "-12px 0 18px" }}>
+            {["Paiement sécurisé", "Aucun abonnement", "Lettre modifiable"].map((item) => (
+              <span key={item} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", borderRadius: 999, background: "var(--primary-light)", color: "var(--primary-dark)", fontSize: 11, fontWeight: 800 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                {item}
+              </span>
+            ))}
+          </div>
 
           {/* Résumé */}
           <div style={{ background: "var(--bg2)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
