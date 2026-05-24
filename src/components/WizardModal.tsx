@@ -5,21 +5,21 @@ import { useFocusTrap } from "../hooks/useFocusTrap";
 interface WizardModalProps {
   onClose: () => void;
   onEligible: (claim: ClaimConfig, answers: Record<string, string>) => void;
+  preselectedClaimId?: string | null;
   initialClaimId?: string | null;
 }
 
-function GlassShine() { return <div className="glass-shine" />; }
-
-export default function WizardModal({ onClose, onEligible, initialClaimId }: WizardModalProps) {
-  const initialClaim = initialClaimId ? claimTypes.find((c) => c.id === initialClaimId) || null : null;
+export default function WizardModal({ onClose, onEligible, preselectedClaimId, initialClaimId }: WizardModalProps) {
+  const preId = preselectedClaimId ?? initialClaimId ?? null;
+  const initialClaim = preId ? claimTypes.find((c) => c.id === preId) || null : null;
   const [step, setStep] = useState(initialClaim ? 1 : 0);
   const [selectedClaim, setSelectedClaim] = useState<ClaimConfig | null>(initialClaim);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [confirmClose, setConfirmClose] = useState(false);
   const backdropRef = useRef<HTMLDivElement>(null);
-  const trapRef = useFocusTrap<HTMLDivElement>(!confirmClose);
-  const confirmRef = useFocusTrap<HTMLDivElement>(confirmClose);
+  const trapRef = useFocusTrap(!confirmClose);
+  const confirmRef = useFocusTrap(confirmClose);
 
   const isDirty = step > 0 && step < 3 && Object.keys(answers).length > 0;
 
@@ -43,7 +43,6 @@ export default function WizardModal({ onClose, onEligible, initialClaimId }: Wiz
     setAnswers((prev) => ({ ...prev, [id]: value }));
   };
 
-  // FIX: les timeouts sont maintenant nettoyés si le modal ferme pendant l'analyse
   useEffect(() => {
     if (step !== 2) return;
     setAnalysisProgress(0);
@@ -61,139 +60,163 @@ export default function WizardModal({ onClose, onEligible, initialClaimId }: Wiz
   const isFormValid = selectedQuestions.filter((q) => q.required).every((q) => answers[q.id]?.trim());
   const eligibility = selectedClaim ? selectedClaim.checkEligibility(answers) : { eligible: false };
 
-  return (
-    <div className="modal-backdrop" ref={backdropRef} onClick={handleBackdrop} role="dialog" aria-modal="true" aria-label="Vérification de droit">
+  // Icon helper
+  const claimIcons: Record<string, JSX.Element> = {
+    vol: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.8 19.2L16 11l3.5-3.5C20.9 6.1 22 4 22 4s-2.1 1.1-3.5 2.5L15 10l-8.2-1.8c-.4-.1-.8.1-1 .4L4 11l6 3 3 6 2.4-1.8c.3-.2.5-.6.4-1z"/></svg>,
+    parking: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 17V7h4a3 3 0 010 6H9"/></svg>,
+    colis: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+    train: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16M12 3v8M8 19l-2 3M16 19l2 3"/></svg>,
+    caution: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  };
 
+  return (
+    <div className="modal-backdrop" ref={backdropRef} onClick={handleBackdrop}>
+      {/* Confirm close dialog */}
       {confirmClose && (
-        <div ref={confirmRef} style={{ position: "fixed", inset: 0, zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: 24, background: "rgba(6,6,10,0.7)" }} role="alertdialog" aria-modal="true" aria-label="Confirmer la fermeture">
-          <div className="liquid-glass-card" style={{ borderRadius: 20, padding: "36px 32px", maxWidth: 380, textAlign: "center", position: "relative" }}>
-            <GlassShine />
-            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ink)", marginBottom: 10, letterSpacing: -0.5, position: "relative", zIndex: 2 }}>Abandonner votre réclamation ?</div>
-            <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 28, position: "relative", zIndex: 2 }}>Vos réponses ne seront pas sauvegardées.</p>
-            <div style={{ display: "flex", gap: 10, position: "relative", zIndex: 2 }}>
-              <button type="button" className="wizard-btn-back" style={{ flex: 1 }} onClick={() => setConfirmClose(false)} autoFocus>Continuer</button>
-              <button type="button" className="wizard-btn-next" style={{ flex: 1, background: "rgba(231,111,81,0.15)", boxShadow: "none", color: "var(--accent)" }} onClick={onClose}>Quitter</button>
+        <div className="modal-backdrop" style={{ zIndex: 600 }}>
+          <div className="modal-content" ref={confirmRef as any} style={{ maxWidth: 380, textAlign: "center", padding: "36px 28px" }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, fontFamily: "'Playfair Display', serif" }}>Abandonner votre réclamation ?</h3>
+            <p style={{ fontSize: 14, color: "var(--muted)", marginBottom: 20 }}>Vos réponses ne seront pas sauvegardées.</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="wizard-btn-back" onClick={() => setConfirmClose(false)} autoFocus style={{ flex: 1 }}>Continuer</button>
+              <button className="wizard-btn-next" onClick={onClose} style={{ flex: 1, background: "var(--accent)" }}>Quitter</button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="modal-content liquid-glass-card" ref={trapRef}>
-        <GlassShine />
-        <button type="button" className="modal-close" onClick={tryClose} aria-label="Fermer">
+      <div className="modal-content" ref={trapRef as any}>
+        <button className="modal-close" onClick={tryClose} aria-label="Fermer">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
 
         <div className="modal-body">
-          <div className="wizard-progress" role="progressbar" aria-valuenow={step} aria-valuemin={0} aria-valuemax={3} aria-label={`Étape ${step + 1} sur 4`}>
-            {[0, 1, 2, 3].map((i) => (<div key={i} className={`wizard-step-dot ${step === i ? "active" : step > i ? "done" : ""}`} />))}
+          {/* Progress dots */}
+          <div className="wizard-progress">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className={`wizard-step-dot${i === step ? " active" : i < step ? " done" : ""}`} />
+            ))}
           </div>
 
-          {/* Step 0 */}
+          {/* Step 0: Claim selection */}
           {step === 0 && (
             <div>
-              <div className="wizard-title">Quel est votre cas ?</div>
-              <div className="wizard-subtitle">Sélectionnez le type de réclamation pour vérifier vos droits.</div>
+              <h2 className="wizard-title">Quel est votre cas ?</h2>
+              <p className="wizard-subtitle">Sélectionnez le type de réclamation pour vérifier vos droits.</p>
               {claimTypes.map((claim) => (
-                <button type="button" key={claim.id} className={`wizard-option ${selectedClaim?.id === claim.id ? "selected" : ""}`} onClick={() => { setSelectedClaim(claim); setAnswers({}); }} aria-pressed={selectedClaim?.id === claim.id}>
+                <button
+                  key={claim.id}
+                  className={`wizard-option${selectedClaim?.id === claim.id ? " selected" : ""}`}
+                  onClick={() => { setSelectedClaim(claim); setAnswers({}); }}
+                  aria-pressed={selectedClaim?.id === claim.id}
+                >
                   <div className="wizard-option-icon">
-                    <svg width="20" height="20" stroke="var(--green)" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><use href={`#icon-${claim.icon}`} /></svg>
+                    {claimIcons[claim.id] || null}
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, color: "var(--ink)", marginBottom: 2 }}>{claim.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 500 }}>{claim.desc}</div>
+                    <div style={{ fontSize: 12, fontWeight: 400, color: "var(--muted)" }}>{claim.desc}</div>
                   </div>
                 </button>
               ))}
               <div className="wizard-btn-row">
-                <button type="button" className="wizard-btn-next" disabled={!selectedClaim} onClick={() => setStep(1)}>Continuer →</button>
+                <button className="wizard-btn-next" disabled={!selectedClaim} onClick={() => setStep(1)}>Continuer →</button>
               </div>
             </div>
           )}
 
-          {/* Step 1 */}
+          {/* Step 1: Questions */}
           {step === 1 && selectedClaim && (
             <div>
-              <div className="wizard-title">{selectedClaim.name}</div>
-              <div className="wizard-subtitle">Répondez à ces questions pour évaluer vos droits.</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 8 }}>
-                {selectedQuestions.map((q) => (
-                  <div key={q.id}>
-                    <label htmlFor={`wf-${q.id}`} style={{ display: "block", fontSize: 13, fontWeight: 700, color: "var(--ink2)", marginBottom: 6 }}>
-                      {q.label} {q.required && <span style={{ color: "var(--accent)" }} aria-label="obligatoire">*</span>}
-                    </label>
-                    {q.type === "select" ? (
-                      <select id={`wf-${q.id}`} className="wizard-select" value={answers[q.id] || ""} onChange={(e) => setAnswer(q.id, e.target.value)} aria-required={q.required}>
-                        <option value="" disabled>Sélectionner…</option>
-                        {q.options?.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
-                      </select>
-                    ) : q.type === "textarea" ? (
-                      <textarea id={`wf-${q.id}`} className="wizard-textarea" placeholder={q.placeholder} value={answers[q.id] || ""} onChange={(e) => setAnswer(q.id, e.target.value)} aria-required={q.required} />
-                    ) : (
-                      <input id={`wf-${q.id}`} className="wizard-input" type={q.type} placeholder={q.placeholder} value={answers[q.id] || ""} onChange={(e) => setAnswer(q.id, e.target.value)} aria-required={q.required} />
-                    )}
-                  </div>
-                ))}
-              </div>
+              <h2 className="wizard-title">{selectedClaim.name}</h2>
+              <p className="wizard-subtitle">Répondez à ces questions pour évaluer vos droits.</p>
+              {selectedQuestions.map((q) => (
+                <div key={q.id} style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "var(--ink2)", marginBottom: 6 }}>
+                    {q.label} {q.required && <span style={{ color: "var(--accent)" }}>*</span>}
+                  </label>
+                  {q.type === "select" ? (
+                    <select className="wizard-select" value={answers[q.id] || ""} onChange={(e) => setAnswer(q.id, e.target.value)} aria-required={q.required}>
+                      <option value="">Sélectionner…</option>
+                      {q.options?.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+                    </select>
+                  ) : q.type === "textarea" ? (
+                    <textarea
+                      className="wizard-textarea"
+                      placeholder={q.placeholder || ""}
+                      value={answers[q.id] || ""}
+                      onChange={(e) => setAnswer(q.id, e.target.value)}
+                      aria-required={q.required}
+                    />
+                  ) : (
+                    <input
+                      className="wizard-input"
+                      type={q.type || "text"}
+                      placeholder={q.placeholder || ""}
+                      value={answers[q.id] || ""}
+                      onChange={(e) => setAnswer(q.id, e.target.value)}
+                      aria-required={q.required}
+                    />
+                  )}
+                </div>
+              ))}
               <div className="wizard-btn-row">
-                <button type="button" className="wizard-btn-back" onClick={() => setStep(0)}>← Retour</button>
-                <button type="button" className="wizard-btn-next" disabled={!isFormValid} onClick={runAnalysis}>Analyser mes droits ⚡</button>
+                <button className="wizard-btn-back" onClick={() => setStep(0)}>← Retour</button>
+                <button className="wizard-btn-next" disabled={!isFormValid} onClick={runAnalysis}>Analyser mes droits</button>
               </div>
             </div>
           )}
 
-          {/* Step 2 */}
+          {/* Step 2: Analysis */}
           {step === 2 && selectedClaim && (
             <div>
-              <div className="wizard-title" style={{ marginBottom: 4 }}>Analyse en cours…</div>
-              <div className="wizard-subtitle" style={{ marginBottom: 20 }}>Notre IA examine votre situation.</div>
-              <div aria-live="polite" aria-atomic="false">
-                {getAnalysisSteps(selectedClaim.id).map((s, i) => (
-                  <div key={i} className="analysis-step" style={{ opacity: analysisProgress > i ? 1 : 0.3, transform: analysisProgress > i ? "translateX(0)" : "translateX(-8px)", transition: "all 0.4s ease" }}>
-                    <div className={`analysis-step-dot ${analysisProgress > i + 1 ? "done" : analysisProgress === i + 1 ? "active" : "pending"}`}>
-                      {analysisProgress > i + 1 ? (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>) : analysisProgress === i + 1 ? (<div className="analysis-spinner" />) : (<div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--light)" }} />)}
+              <h2 className="wizard-title">Analyse en cours…</h2>
+              <p className="wizard-subtitle">Vérification de vos droits selon les textes applicables.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 16 }}>
+                {getAnalysisSteps(selectedClaim.id).map((step, i) => (
+                  <div key={i} className={`analysis-step${i < analysisProgress ? " visible" : ""}`}>
+                    <div className={`analysis-step-dot${i < analysisProgress ? " done" : i === analysisProgress - 1 ? " active" : " pending"}`}>
+                      {i < analysisProgress ? (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                      ) : i === analysisProgress ? (
+                        <div className="analysis-spinner" />
+                      ) : null}
                     </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: analysisProgress > i ? "var(--ink)" : "var(--light)" }}>{s.label}</div>
-                      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 1 }}>{s.sub}</div>
-                    </div>
+                    <span style={{ fontSize: 14, fontWeight: 500, color: i < analysisProgress ? "var(--ink)" : "var(--muted)" }}>{step.label}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Step 3 */}
+          {/* Step 3: Result */}
           {step === 3 && selectedClaim && (
-            <div className="result-eligible">
-              <div className="result-check" role="img" aria-label={eligibility.eligible ? "Éligible" : "Non éligible"}
-                style={!eligibility.eligible ? { background: "rgba(231,111,81,0.12)", border: "1px solid rgba(231,111,81,0.2)" } : {}}>
-                {eligibility.eligible
-                  ? <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                  : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
-                }
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: eligibility.eligible ? "var(--green)" : "var(--accent)", marginBottom: 8, letterSpacing: 0.5, textTransform: "uppercase" as const }}>
-                {eligibility.eligible ? "Vous êtes éligible !" : "Non éligible"}
-              </div>
-              <div className="result-amount">{selectedClaim.calculateAmount({ ...answers, _calculatedAmount: selectedClaim.calculateAmount(answers) })}</div>
-              <div style={{ marginBottom: 20 }}>
-                <span className="result-law"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>{selectedClaim.law}</span>
-              </div>
-              <div className="result-desc">{selectedClaim.lawDesc}</div>
+            <div>
               {eligibility.eligible ? (
-                <button type="button" className="wizard-btn-next" style={{ width: "100%", fontSize: 15, padding: "16px 28px" }} onClick={() => { onEligible(selectedClaim, answers); onClose(); }}>
-                  Générer ma lettre — 9€
-                </button>
+                <div className="result-eligible">
+                  <div className="result-check">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                  </div>
+                  <div className="result-amount">{selectedClaim.calculateAmount(answers)}</div>
+                  <div className="result-law">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                    {selectedClaim.law}
+                  </div>
+                  <p className="result-desc">{eligibility.reason || "Vous êtes éligible à une réclamation. Générez votre lettre juridique personnalisée."}</p>
+                  <button className="wizard-btn-next" style={{ width: "100%" }} onClick={() => onEligible(selectedClaim, answers)}>
+                    Générer ma lettre — 9€
+                  </button>
+                </div>
               ) : (
-                <div style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.7, marginBottom: 16 }}>
-                  {eligibility.reason || "Les conditions ne sont pas remplies pour ce type de réclamation."}
+                <div className="result-ineligible">
+                  <div className="result-ineligible-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--light)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                  </div>
+                  <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8, fontFamily: "'Playfair Display', serif" }}>Réclamation non éligible</h3>
+                  <p className="result-desc">{eligibility.reason || "D'après les informations fournies, votre situation ne semble pas éligible à une réclamation."}</p>
+                  <button className="wizard-btn-back" style={{ width: "100%" }} onClick={onClose}>Fermer</button>
                 </div>
               )}
-              <div style={{ marginTop: 12, fontSize: 12, color: "var(--light)" }}>{eligibility.eligible ? "Satisfait ou remboursé 7 jours" : ""}</div>
-              <div style={{ marginTop: 16, textAlign: "center" }}>
-                <button type="button" className="wizard-btn-back" onClick={onClose}>Fermer</button>
-              </div>
             </div>
           )}
         </div>

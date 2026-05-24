@@ -14,7 +14,6 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // En production, envoyer à un service de monitoring
     console.error("Plaidezy ErrorBoundary:", error, info.componentStack);
   }
 
@@ -22,53 +21,51 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0a0a0f",
-          padding: "24px",
-          fontFamily: "'Bricolage Grotesque', sans-serif",
+          minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+          padding: 40, background: "var(--bg, #FAFAF8)",
         }}>
-          <div style={{ textAlign: "center", maxWidth: 480 }}>
+          <div style={{ textAlign: "center", maxWidth: 420 }}>
             <div style={{
-              width: 64, height: 64, borderRadius: "50%",
-              background: "rgba(231,111,81,0.12)",
-              border: "1px solid rgba(231,111,81,0.2)",
+              width: 56, height: 56, borderRadius: "50%",
+              background: "var(--accent-light, #FFF3EE)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 24px",
+              margin: "0 auto 20px",
             }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                stroke="#E76F51" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #B44D2D)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: "#f0f0f5", marginBottom: 10, letterSpacing: -0.5 }}>
+            <h1 style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 24, fontWeight: 700, color: "var(--ink, #1A1A1A)",
+              marginBottom: 8, letterSpacing: -0.5,
+            }}>
               Une erreur est survenue
             </h1>
-            <p style={{ fontSize: 14, color: "#9999ad", lineHeight: 1.7, marginBottom: 28 }}>
+            <p style={{
+              fontSize: 14, color: "var(--muted, #6B6B6B)", lineHeight: 1.6,
+              marginBottom: 24,
+            }}>
               Plaidezy a rencontré un problème inattendu. Rechargez la page pour continuer.
             </p>
             <button
-              type="button"
               onClick={() => window.location.reload()}
               style={{
-                background: "#f0f0f5", color: "#0a0a0f", border: "none",
-                padding: "14px 28px", borderRadius: "99px",
-                fontFamily: "'Bricolage Grotesque', sans-serif",
+                background: "var(--green, #2D6A4F)", color: "#fff", border: "none",
+                padding: "12px 24px", borderRadius: 8,
+                fontFamily: "'Inter', sans-serif",
                 fontSize: 14, fontWeight: 700, cursor: "pointer",
+                transition: "background 0.2s",
               }}
             >
               Recharger la page
             </button>
-            <div style={{ marginTop: 16, fontSize: 12, color: "#66667a" }}>
+            <p style={{ fontSize: 12, color: "var(--light, #999)", marginTop: 16 }}>
               Si le problème persiste :{" "}
-              <a href="mailto:contact@plaidezy.com" style={{ color: "#52B788" }}>
+              <a href="mailto:contact@plaidezy.com" style={{ color: "var(--green, #2D6A4F)", textDecoration: "underline" }}>
                 contact@plaidezy.com
               </a>
-            </div>
+            </p>
           </div>
         </div>
       );

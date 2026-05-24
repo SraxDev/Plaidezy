@@ -6,6 +6,7 @@ import type { ClaimConfig, PersonalInfo } from "../lib/claims";
 interface LetterBuilderProps {
   claim: ClaimConfig;
   answers: Record<string, string>;
+  amount: string;
   onClose: () => void;
 }
 
@@ -13,10 +14,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   const [personal, setPersonal] = useState<PersonalInfo>(() => {
     try {
       const saved = localStorage.getItem("plaidezy_session");
-      if (saved) {
-        const session = JSON.parse(saved);
-        if (session.personal) return session.personal;
-      }
+      if (saved) { const session = JSON.parse(saved); if (session.personal) return session.personal; }
     } catch { /* noop */ }
     return { fullName: "", address: "", city: "", email: "" };
   });
@@ -24,10 +22,7 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   const [letterText, setLetterText] = useState(() => {
     try {
       const saved = localStorage.getItem("plaidezy_session");
-      if (saved) {
-        const session = JSON.parse(saved);
-        if (session.letterText) return session.letterText;
-      }
+      if (saved) { const session = JSON.parse(saved); if (session.letterText) return session.letterText; }
     } catch { /* noop */ }
     return "";
   });
@@ -53,33 +48,20 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
-  const trapRef = useFocusTrap<HTMLDivElement>(true);
+  const trapRef = useFocusTrap(true);
 
   const isFormValid = personal.fullName.trim() && personal.address.trim() && personal.city.trim() && personal.email.trim();
 
   const generateWithAI = async (promoCodeOverride?: string) => {
-    setGenerating(true);
-    setError("");
-    setLetterText("");
-
+    setGenerating(true); setError(""); setLetterText("");
     let paymentReference = "";
     let savedPromoCode = "";
     try {
       const saved = localStorage.getItem("plaidezy_session");
-      if (saved) {
-        const session = JSON.parse(saved);
-        paymentReference = session.checkoutRef || "";
-        savedPromoCode = session.promoCode || "";
-      }
+      if (saved) { const session = JSON.parse(saved); paymentReference = session.checkoutRef || ""; savedPromoCode = session.promoCode || ""; }
     } catch { /* noop */ }
 
-    const body: Record<string, unknown> = {
-      claimId: claim.id,
-      answers,
-      personal,
-      paymentReference,
-    };
-
+    const body: Record<string, unknown> = { claimId: claim.id, answers, personal, paymentReference };
     const activePromo = promoCodeOverride || savedPromoCode;
     if (activePromo) body.promoCode = activePromo;
 
@@ -89,103 +71,60 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
       if (!data.letter) throw new Error("Réponse vide du serveur");
-
       setLetterText(data.letter);
       setLocked(false);
-
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({
-          ...saved,
-          letterText: data.letter,
-          step: "builder-unlocked",
-        }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, step: "builder-unlocked" }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors de la génération");
-    } finally {
-      setGenerating(false);
-    }
+    } finally { setGenerating(false); }
   };
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) return;
-    setPromoApplying(true);
-    setPromoError("");
-    setPromoSuccess(false);
-
+    setPromoApplying(true); setPromoError(""); setPromoSuccess(false);
     try {
       const res = await fetch("/api/generate-letter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          claimId: claim.id,
-          answers,
-          personal,
-          promoCode: promoCode.trim(),
-        }),
+        body: JSON.stringify({ claimId: claim.id, answers, personal, promoCode: promoCode.trim() }),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setPromoError(data.error || "Code promo invalide.");
-        return;
-      }
-
+      if (!res.ok) { setPromoError(data.error || "Code promo invalide."); return; }
       if (!data.letter) throw new Error("Réponse vide du serveur");
-
       setPromoSuccess(true);
       setLetterText(data.letter);
       setLocked(false);
-
       try {
         const saved = JSON.parse(localStorage.getItem("plaidezy_session") || "{}");
-        localStorage.setItem("plaidezy_session", JSON.stringify({
-          ...saved,
-          letterText: data.letter,
-          step: "builder-unlocked",
-        }));
+        localStorage.setItem("plaidezy_session", JSON.stringify({ ...saved, letterText: data.letter, step: "builder-unlocked" }));
       } catch { /* noop */ }
     } catch (e: unknown) {
       setPromoError(e instanceof Error ? e.message : "Erreur lors de la vérification");
-    } finally {
-      setPromoApplying(false);
-    }
+    } finally { setPromoApplying(false); }
   };
 
   const handlePay = async () => {
-    setPaying(true);
-    setPayError("");
-
+    setPaying(true); setPayError("");
     try {
       const res = await fetch("/api/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ claimId: claim.id, amount: 9.0 }),
       });
-
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Erreur lors de la création du paiement");
-
       try {
         localStorage.setItem("plaidezy_session", JSON.stringify({
-          claimId: claim.id,
-          answers,
-          amount: claim.calculateAmount(answers),
-          step: "builder",
-          letterText,
-          personal,
-          checkoutRef: data.checkoutReference,
+          claimId: claim.id, answers, amount: claim.calculateAmount(answers),
+          step: "builder", letterText, personal, checkoutRef: data.checkoutReference,
         }));
       } catch { /* noop */ }
-
       window.location.href = data.hostedCheckoutUrl;
     } catch (e: unknown) {
       setPayError(e instanceof Error ? e.message : "Erreur lors du paiement");
@@ -254,66 +193,67 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
   }));
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="Génération de lettre">
-      <div className="modal-content" ref={trapRef} style={{ maxWidth: 720, maxHeight: "90vh" }}>
-        <button type="button" className="modal-close" onClick={onClose} aria-label="Fermer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+    <div className="modal-backdrop">
+      <div className="modal-content" ref={trapRef as any} style={{ maxWidth: 580 }}>
+        <button className="modal-close" onClick={onClose} aria-label="Fermer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
         </button>
-
-        <div className="modal-body" style={{ overflowY: "auto", maxHeight: "90vh" }}>
+        <div className="modal-body">
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20, padding: "10px 14px", borderRadius: 12, background: "rgba(82,183,136,0.08)", border: "1px solid rgba(82,183,136,0.15)" }}>
-            <svg width="20" height="20" stroke="var(--green)" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><use href={`#icon-${claim.icon}`} /></svg>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>{claim.name}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--green)", marginLeft: "auto" }}>{claim.law.split("·")[0].trim()}</span>
+          <div style={{ marginBottom: 24 }}>
+            <h2 className="wizard-title">{claim.name}</h2>
+            <span style={{
+              display: "inline-block", fontSize: 12, fontWeight: 700,
+              color: "var(--green)", background: "var(--green-light)",
+              padding: "3px 10px", borderRadius: 6,
+            }}>{claim.law.split("·")[0].trim()}</span>
           </div>
 
           {/* Résumé du dossier */}
-          <div style={{ marginBottom: 20, padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>Résumé de votre dossier</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {summaryItems.map((item, i) => (
-                <div key={i}>
-                  <span style={{ fontSize: 11, color: "var(--light)" }}>{item.label} : </span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink2)" }}>{item.value}</span>
+          <div style={{ background: "var(--bg2)", borderRadius: 10, padding: 16, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>Résumé de votre dossier</h3>
+            {summaryItems.map((item, i) => (
+              <div key={i} style={{
+                display: "flex", justifyContent: "space-between", padding: "5px 0",
+                borderBottom: i < summaryItems.length - 1 ? "1px solid var(--border)" : "none",
+              }}>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>{item.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--ink2)" }}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Coordonnées */}
+          <div style={{ marginBottom: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>Vos coordonnées</h3>
+            <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 14 }}>Ces informations apparaîtront dans votre lettre.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {personalFields.map((field) => (
+                <div key={field.id} style={{ gridColumn: field.fullWidth ? "1 / -1" : undefined }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--ink2)", marginBottom: 4 }}>{field.label}</label>
+                  <input
+                    className="wizard-input"
+                    placeholder={field.placeholder}
+                    value={personal[field.id]}
+                    onChange={(e) => setPersonal((prev) => ({ ...prev, [field.id]: e.target.value }))}
+                  />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Coordonnées */}
-          <div className="wizard-title">Vos coordonnées</div>
-          <div className="wizard-subtitle">Ces informations apparaîtront dans votre lettre.</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 20 }}>
-            {personalFields.map((field) => (
-              <div key={field.id} style={field.fullWidth ? { gridColumn: "1 / -1" } : {}}>
-                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink2)", marginBottom: 5 }}>{field.label}</label>
-                <input
-                  className="wizard-input"
-                  type={field.id === "email" ? "email" : "text"}
-                  autoComplete={field.id === "email" ? "email" : field.id === "fullName" ? "name" : "off"}
-                  placeholder={field.placeholder}
-                  value={personal[field.id]}
-                  onChange={(e) => setPersonal((prev) => ({ ...prev, [field.id]: e.target.value }))}
-                  style={{ padding: "11px 14px", borderRadius: 10 }}
-                />
-              </div>
-            ))}
-          </div>
-
           {/* Bouton générer */}
           {!letterText && (
-            <button type="button"
+            <button
               className="wizard-btn-next"
-              style={{ width: "100%", fontSize: 15, padding: "16px 28px", marginBottom: 20 }}
+              style={{ width: "100%", padding: "14px 24px" }}
               disabled={!isFormValid || generating}
               onClick={() => generateWithAI()}
             >
               {generating ? (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                  <div className="analysis-spinner" /> L'IA rédige votre lettre…
+                  <div className="analysis-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                  L'IA rédige votre lettre…
                 </span>
               ) : (
                 <>Générer ma lettre avec l'IA ⚡</>
@@ -321,36 +261,29 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
             </button>
           )}
 
-          {/* Erreur génération */}
+          {/* Erreur */}
           {error && (
-            <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(231,111,81,0.1)", border: "1px solid rgba(231,111,81,0.2)", fontSize: 13, color: "var(--accent)", marginBottom: 16 }}>
-              {error}
+            <div style={{ background: "var(--accent-light)", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
+              <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600 }}>{error}</p>
             </div>
           )}
 
           {/* Aperçu de la lettre */}
           {letterText && (
-            <div style={{ position: "relative", marginBottom: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 10 }}>
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
                 {locked ? "Aperçu verrouillé" : "Votre lettre"}
-              </div>
+              </h3>
               <div
                 ref={previewRef}
                 style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 14,
-                  padding: 24,
-                  maxHeight: 280,
-                  overflowY: "auto",
-                  fontSize: 12,
-                  lineHeight: 1.8,
-                  color: "var(--ink2)",
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "'Bricolage Grotesque', sans-serif",
-                  transition: "filter 0.5s ease",
-                  filter: locked ? "blur(5px)" : "none",
-                  userSelect: locked ? "none" : "auto",
+                  background: "var(--surface)", border: "1px solid var(--border)",
+                  borderRadius: 10, padding: 20,
+                  maxHeight: 260, overflow: "hidden",
+                  position: "relative",
+                  fontSize: 13, lineHeight: 1.75, color: "var(--ink2)",
+                  whiteSpace: "pre-wrap", fontFamily: "'Inter', sans-serif",
+                  ...(locked ? { filter: "blur(3px)", userSelect: "none" as const } : {}),
                 }}
               >
                 {letterText}
@@ -358,116 +291,87 @@ export default function LetterBuilder({ claim, answers, onClose }: LetterBuilder
 
               {locked && (
                 <div style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "linear-gradient(to bottom, transparent 0%, rgba(14,14,22,0.4) 30%, rgba(14,14,22,0.85) 60%, rgba(14,14,22,0.97) 100%)",
-                  borderRadius: 14,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                  paddingBottom: 28,
-                  paddingLeft: 24,
-                  paddingRight: 24,
+                  background: "var(--bg2)", border: "1px solid var(--border)",
+                  borderRadius: 10, padding: 20, marginTop: 12, textAlign: "center",
                 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: 14, background: "var(--green-light)", border: "1px solid rgba(82,183,136,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ink)", marginBottom: 6, textAlign: "center", letterSpacing: -0.5 }}>
-                    Votre lettre est prête
-                  </div>
-                  <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 20, textAlign: "center", lineHeight: 1.6 }}>
+                  <h4 style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>Votre lettre est prête</h4>
+                  <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 16 }}>
                     Débloquez-la pour la lire en entier et télécharger le PDF.
-                  </div>
+                  </p>
 
-                  {/* Champ code promo */}
-                  <div style={{ width: "100%", maxWidth: 320, marginBottom: 12 }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <input
-                        className="wizard-input"
-                        type="text"
-                        placeholder="Code promo"
-                        value={promoCode}
-                        onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); setPromoSuccess(false); }}
-                        style={{ padding: "11px 14px", borderRadius: 10, flex: 1, fontSize: 13, letterSpacing: 1 }}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleApplyPromo}
-                        disabled={!promoCode.trim() || promoApplying || !isFormValid}
-                        style={{
-                          padding: "11px 16px",
-                          borderRadius: 10,
-                          background: "rgba(82,183,136,0.15)",
-                          border: "1px solid rgba(82,183,136,0.3)",
-                          color: "var(--green)",
-                          fontSize: 13,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                          fontFamily: "'Bricolage Grotesque', sans-serif",
-                        }}
-                      >
-                        {promoApplying ? "…" : "Appliquer"}
-                      </button>
-                    </div>
-                    {promoError && (
-                      <div style={{ fontSize: 12, color: "var(--accent)", marginTop: 6 }}>{promoError}</div>
-                    )}
-                    {promoSuccess && (
-                      <div style={{ fontSize: 12, color: "var(--green)", marginTop: 6 }}>✓ Code appliqué — lettre débloquée !</div>
-                    )}
+                  {/* Code promo */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+                    <input
+                      className="wizard-input"
+                      placeholder="CODE PROMO"
+                      value={promoCode}
+                      onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); setPromoSuccess(false); }}
+                      style={{ flex: 1, fontSize: 13, letterSpacing: 1 }}
+                    />
+                    <button className="wizard-btn-back" onClick={handleApplyPromo} disabled={promoApplying} style={{ whiteSpace: "nowrap" }}>
+                      {promoApplying ? "…" : "Appliquer"}
+                    </button>
                   </div>
+                  {promoError && <p style={{ fontSize: 12, color: "var(--accent)", marginBottom: 8 }}>{promoError}</p>}
+                  {promoSuccess && <p style={{ fontSize: 12, color: "var(--green)", fontWeight: 700, marginBottom: 8 }}>✓ Code appliqué — lettre débloquée !</p>}
 
                   {/* Séparateur */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", maxWidth: 320, marginBottom: 12 }}>
-                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
-                    <span style={{ fontSize: 11, color: "var(--light)" }}>ou</span>
-                    <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.08)" }} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "12px 0" }}>
+                    <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                    <span style={{ fontSize: 12, color: "var(--light)" }}>ou</span>
+                    <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
                   </div>
 
                   {payError && (
-                    <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(231,111,81,0.1)", border: "1px solid rgba(231,111,81,0.15)", fontSize: 12, color: "var(--accent)", marginBottom: 12, maxWidth: 320, textAlign: "center" }}>
-                      {payError}
+                    <div style={{ background: "var(--accent-light)", borderRadius: 8, padding: "8px 12px", marginBottom: 10 }}>
+                      <p style={{ fontSize: 12, color: "var(--accent)" }}>{payError}</p>
                     </div>
                   )}
 
-                  <button type="button"
+                  <button
                     className="wizard-btn-next"
-                    style={{ width: "100%", maxWidth: 320, fontSize: 15, padding: "16px 28px" }}
-                    disabled={paying}
+                    style={{ width: "100%", padding: "12px 20px" }}
                     onClick={handlePay}
+                    disabled={paying}
                   >
                     {paying ? (
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                        <div className="analysis-spinner" /> Redirection vers le paiement…
+                        <div className="analysis-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                        Redirection vers le paiement…
                       </span>
                     ) : "Débloquer ma lettre — 9€"}
                   </button>
 
                   {!import.meta.env.PROD && (
-                    <button onClick={handleDevUnlock} style={{ marginTop: 10, background: "none", border: "none", color: "var(--light)", fontSize: 12, cursor: "pointer", fontFamily: "'Bricolage Grotesque', sans-serif", textDecoration: "underline" }}>
+                    <button
+                      className="wizard-btn-back"
+                      style={{ width: "100%", marginTop: 8, fontSize: 12 }}
+                      onClick={handleDevUnlock}
+                    >
                       Mode dev : débloquer sans payer
                     </button>
                   )}
 
-                  <div style={{ fontSize: 11, color: "var(--light)", marginTop: 8, textAlign: "center" }}>
-                    Paiement sécurisé · CB, Apple Pay, Google Pay
-                  </div>
+                  <p style={{ fontSize: 11, color: "var(--light)", marginTop: 10 }}>Paiement sécurisé · CB, Apple Pay, Google Pay</p>
                 </div>
               )}
             </div>
           )}
 
+          {/* Actions quand débloqué */}
           {letterText && !locked && (
-            <div style={{ display: "flex", gap: 10 }}>
-              <button type="button" className="wizard-btn-back" onClick={onClose}>Fermer</button>
-              <button type="button" className="wizard-btn-next" style={{ flex: 1 }} disabled={downloading} onClick={handleDownload}>
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <button className="wizard-btn-back" onClick={onClose} style={{ flex: 0 }}>Fermer</button>
+              <button
+                className="wizard-btn-next"
+                onClick={handleDownload}
+                disabled={downloading}
+                style={{ flex: 1 }}
+              >
                 {downloading ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <div className="analysis-spinner" /> PDF…
+                    <div className="analysis-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+                    PDF…
                   </span>
                 ) : <>Télécharger le PDF</>}
               </button>
