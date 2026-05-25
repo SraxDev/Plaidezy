@@ -289,6 +289,24 @@ function ConfidentialiteContent() {
 
 
 function ContactAideContent() {
+  const supportCards = [
+    {
+      title: "Problème de paiement",
+      text: "Paiement débité, retour bloqué, lien SumUp expiré ou confirmation manquante.",
+      href: "mailto:contact@plaidezy.com?subject=Probl%C3%A8me%20de%20paiement%20Plaidezy",
+    },
+    {
+      title: "Problème avec ma lettre",
+      text: "Lettre incomplète, information à corriger, téléchargement PDF/Word impossible.",
+      href: "mailto:contact@plaidezy.com?subject=Probl%C3%A8me%20avec%20ma%20lettre%20Plaidezy",
+    },
+    {
+      title: "Demande de remboursement",
+      text: "Vous souhaitez utiliser la garantie satisfait ou remboursé de 7 jours.",
+      href: "mailto:contact@plaidezy.com?subject=Demande%20de%20remboursement%20Plaidezy",
+    },
+  ];
+
   return (
     <div>
       <h1 style={{
@@ -300,10 +318,40 @@ function ContactAideContent() {
       </h1>
       <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Une question avant ou après la génération de votre lettre ?</p>
 
+      <Section title="Support rapide">
+        <p>Choisissez le sujet le plus proche de votre demande pour nous envoyer un email pré-rempli.</p>
+        <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
+          {supportCards.map((card) => (
+            <a key={card.title} href={card.href} style={{
+              display: "block",
+              padding: "16px 18px",
+              borderRadius: 14,
+              border: "1px solid var(--border)",
+              background: "var(--surface)",
+              textDecoration: "none",
+              boxShadow: "var(--shadow-sm)",
+            }}>
+              <strong style={{ display: "block", color: "var(--ink)", fontSize: 14, marginBottom: 4 }}>{card.title}</strong>
+              <span style={{ display: "block", color: "var(--muted)", fontSize: 13, lineHeight: 1.55 }}>{card.text}</span>
+              <span style={{ display: "inline-block", marginTop: 10, color: "var(--green)", fontWeight: 800, fontSize: 12 }}>Écrire au support →</span>
+            </a>
+          ))}
+        </div>
+      </Section>
+
       <Section title="Nous contacter">
-        <p>Pour toute question, demande de remboursement ou problème technique, vous pouvez nous écrire à :</p>
+        <p>Pour toute autre question, vous pouvez nous écrire à :</p>
         <p style={{ marginTop: 10 }}><a href="mailto:contact@plaidezy.com" style={linkStyle}>contact@plaidezy.com</a></p>
         <p style={{ marginTop: 10 }}>Nous faisons notre possible pour répondre sous 24h ouvrées.</p>
+      </Section>
+
+      <Section title="Questions fréquentes du support">
+        <ul style={{ paddingLeft: 20 }}>
+          <li><span style={strongStyle}>Je n’ai pas reçu ma lettre :</span> vérifiez que la génération est allée au bout et que votre paiement/code promo a bien été validé.</li>
+          <li><span style={strongStyle}>Le paiement a été débité mais je suis bloqué :</span> contactez-nous avec l’email utilisé et l’heure approximative du paiement.</li>
+          <li><span style={strongStyle}>Puis-je modifier la lettre ?</span> Oui, la lettre est modifiable avant téléchargement PDF ou Word.</li>
+          <li><span style={strongStyle}>Puis-je demander un remboursement ?</span> Oui, vous pouvez nous écrire sous 7 jours si la lettre ne correspond pas à votre situation.</li>
+        </ul>
       </Section>
 
       <Section title="Avant de nous écrire">

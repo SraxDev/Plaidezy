@@ -565,6 +565,12 @@ export default function LetterBuilder({ claim, answers, onClose, onEdit }: Lette
                   ) : <>Télécharger le PDF</>}
                 </button>
               </div>
+              <p style={{ textAlign: "center", marginTop: 12, fontSize: 12, color: "var(--muted)", fontWeight: 700 }}>
+                Un problème avec votre lettre ?{" "}
+                <a href="mailto:contact@plaidezy.com?subject=Support%20lettre%20Plaidezy" style={{ color: "var(--primary-dark)", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                  Contactez le support
+                </a>
+              </p>
             </>
           )}
         </div>
