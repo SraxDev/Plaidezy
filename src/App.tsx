@@ -1083,7 +1083,6 @@ function AppInner() {
       )}
 
       <FooterSection />
-      <MobileSticky onStart={openWizard} />
 
       {paymentReturn.verifying && (
         <div className="modal-backdrop">
