@@ -287,8 +287,16 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
         {services.map((s, i) => (
           <div className={`reveal reveal-delay-${Math.min(i + 1, 5)}`} key={i}>
             <div
-              className={`service-card${s.locked ? " locked" : ""}`}
+              className={`service-card ${serviceIconClass[s.icon]}${s.locked ? " locked" : ""}`}
+              role={!s.locked ? "button" : undefined}
+              tabIndex={!s.locked ? 0 : undefined}
               onClick={() => { if (!s.locked && serviceToClaim[s.icon]) onSelectService(serviceToClaim[s.icon]); }}
+              onKeyDown={(e) => {
+                if (!s.locked && serviceToClaim[s.icon] && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  onSelectService(serviceToClaim[s.icon]);
+                }
+              }}
               style={!s.locked ? { cursor: "pointer" } : {}}
             >
               <div className="sc-top">

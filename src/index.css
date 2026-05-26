@@ -4425,3 +4425,78 @@ footer .footer-rich {
     text-align: center;
   }
 }
+
+/* Micro-interaction premium sur les cas */
+.service-card:not(.locked) {
+  isolation: isolate;
+}
+.service-card:not(.locked)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(13, 148, 136, 0.12), transparent 34%),
+    linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.72) 42%, transparent 58%);
+  transform: translateX(-24%) scale(1.02);
+  transition: opacity 0.32s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.service-card:not(.locked):hover::after,
+.service-card:not(.locked):focus-visible::after {
+  opacity: 1;
+  transform: translateX(24%) scale(1.02);
+}
+.service-card:not(.locked):focus-visible {
+  outline: 3px solid var(--primary-glow);
+  outline-offset: 4px;
+  border-color: var(--primary);
+}
+.service-card:not(.locked):hover .sc-cta,
+.service-card:not(.locked):focus-visible .sc-cta {
+  padding: 8px 10px 8px 12px;
+  border-radius: 999px;
+  background: var(--primary-light);
+}
+.service-card.plane:not(.locked)::after {
+  background: radial-gradient(circle at 18% 0%, rgba(37, 99, 235, 0.14), transparent 34%), linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.72) 42%, transparent 58%);
+}
+.service-card.parking:not(.locked)::after {
+  background: radial-gradient(circle at 18% 0%, rgba(220, 38, 38, 0.11), transparent 34%), linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.72) 42%, transparent 58%);
+}
+.service-card.package:not(.locked)::after {
+  background: radial-gradient(circle at 18% 0%, rgba(217, 119, 6, 0.12), transparent 34%), linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.72) 42%, transparent 58%);
+}
+.service-card.train:not(.locked)::after {
+  background: radial-gradient(circle at 18% 0%, rgba(22, 163, 74, 0.12), transparent 34%), linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.72) 42%, transparent 58%);
+}
+.service-card.home:not(.locked)::after {
+  background: radial-gradient(circle at 18% 0%, rgba(147, 51, 234, 0.12), transparent 34%), linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.72) 42%, transparent 58%);
+}
+
+@media (hover: none) {
+  .service-card:not(.locked) {
+    transition-duration: 0.22s;
+  }
+  .service-card:not(.locked):active {
+    transform: scale(0.985) translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+  .service-card:not(.locked):active::before {
+    opacity: 1;
+  }
+  .service-card:not(.locked):active::after {
+    opacity: 1;
+    transform: translateX(18%) scale(1.02);
+    transition-duration: 0.22s;
+  }
+  .service-card:not(.locked):active .sc-icon {
+    transform: scale(1.06) rotate(-4deg);
+  }
+  .service-card:not(.locked):active .sc-cta {
+    padding: 8px 10px 8px 12px;
+    border-radius: 999px;
+    background: var(--primary-light);
+  }
+}
