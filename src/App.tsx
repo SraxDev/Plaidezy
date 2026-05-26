@@ -206,7 +206,7 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
       <div className="hero-left">
         <div className="hero-eyebrow">
           <IconCoins />
-          <span>9€ fixe · Zéro commission</span>
+          <span>Prix clair · zéro commission</span>
         </div>
         <h1>
           Réclamez ce qui<br />vous <span className="green">appartient.</span>
@@ -220,7 +220,7 @@ function HeroSection({ onOpenWizard }: { onOpenWizard: () => void }) {
         </div>
         <p className="hero-microcopy">Aucune carte bancaire demandée pour vérifier votre situation.</p>
         <div className="hero-trust">
-          {["Vérification gratuite", "9€ fixe si éligible", "Satisfait ou remboursé"].map((t, i) => (
+          {["Vérification gratuite", "9 € seulement si éligible", "Satisfait ou remboursé"].map((t, i) => (
             <span key={i} style={{ display: "contents" }}>
               <span className="trust-item">
                 <span className="trust-check"><IconCheck /></span>
@@ -325,7 +325,7 @@ function ServicesSection({ onSelectService }: { onSelectService: (claimId: strin
 /* ─── VERSUS ─── */
 function VersusSection() {
   const rows: { label: string; plaidezy: boolean | string; avocat: boolean | string; legaltech: boolean | string | null }[] = [
-    { label: "Prix", plaidezy: "9€ fixe", avocat: "25–35% du gain", legaltech: "15–25% du gain" },
+    { label: "Prix", plaidezy: "9 € fixe", avocat: "25–35% du gain", legaltech: "15–25% du gain" },
     { label: "Délai", plaidezy: "2 minutes", avocat: "3–10 jours", legaltech: "24–72h" },
     { label: "Adapté à chaque cas", plaidezy: true, avocat: true, legaltech: null },
     { label: "Sans commission", plaidezy: true, avocat: false, legaltech: false },
@@ -373,7 +373,7 @@ function HowItWorksSection() {
   const steps = [
     { num: "01", icon: "search", title: "Décrivez votre situation", desc: "En quelques mots, sans jargon.", badge: "Gratuit" },
     { num: "02", icon: "zap", title: "Évaluation de votre situation", desc: "On vérifie automatiquement les critères applicables à votre cas.", badge: "< 30 sec" },
-    { num: "03", icon: "lock", title: "Payez si éligible", desc: "9€ uniquement si vous avez un droit à faire valoir.", badge: "9€" },
+    { num: "03", icon: "lock", title: "Payez si éligible", desc: "9 € uniquement si vous avez un droit à faire valoir.", badge: "9 €" },
     { num: "04", icon: "send", title: "Recevez votre lettre", desc: "PDF prêt à envoyer avec les articles de loi exacts.", badge: "2 min" },
   ];
   const Icon = (name: string) => { const C = howIcons[name]; return C ? <C /> : null; };
@@ -439,7 +439,7 @@ function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
             </p>
           </div>
           <div className="letter-footer-actions">
-            <button className="letter-cta-small" onClick={onOpenWizard}>Générer ma lettre — 9€</button>
+            <button className="letter-cta-small" onClick={onOpenWizard}>Générer ma lettre — 9 €</button>
             <span className="letter-badge-small">PDF prêt en 2 min</span>
           </div>
         </div>
@@ -451,9 +451,9 @@ function LetterPreviewSection({ onOpenWizard }: { onOpenWizard: () => void }) {
 /* ─── GUARANTEES ─── */
 function GuaranteesSection() {
   const cards = [
-    { icon: "refund", title: "Satisfait ou remboursé", text: "Pas satisfait ? On vous rembourse les 9€ sans question, dans les 7 jours.", featured: true },
+    { icon: "refund", title: "Satisfait ou remboursé", text: "Pas satisfait ? On vous rembourse les 9 € sans question, dans les 7 jours.", featured: true },
     { icon: "scales", title: "Fondée sur les textes", text: "La lettre s’appuie sur les références utiles à votre situation. Pas un modèle générique — du personnalisé.", featured: false },
-    { icon: "shield-check", title: "Zéro commission", text: "9€ fixe, quel que soit le montant récupéré. Vos 400€ restent 100% les vôtres.", featured: false },
+    { icon: "shield-check", title: "Zéro commission", text: "9 € fixe, quel que soit le montant récupéré. Vos 400€ restent 100% les vôtres.", featured: false },
   ];
   const Icon = (name: string) => { const C = guaranteeIcons[name]; return C ? <C /> : null; };
 
@@ -482,9 +482,9 @@ function GuaranteesSection() {
 function FAQSection() {
   const faqs = [
     { q: "Est-ce que Plaidezy remplace un avocat ?", a: "Non. Plaidezy est un outil d'assistance rédactionnelle pour des cas courants et encadrés. Il ne constitue pas un conseil juridique personnalisé et ne remplace pas un avocat, notamment pour les litiges complexes." },
-    { q: "Est-ce que je paie si je ne suis pas éligible ?", a: "Non. La vérification est gratuite. Vous ne payez les 9€ que si votre situation semble compatible avec une réclamation et que vous souhaitez générer la lettre." },
+    { q: "Est-ce que je paie si je ne suis pas éligible ?", a: "Non. La vérification est gratuite. Vous ne payez les 9 € que si votre situation semble compatible avec une réclamation et que vous souhaitez générer la lettre." },
     { q: "Qu’est-ce que je reçois exactement ?", a: "Vous recevez une lettre personnalisée avec vos informations, le résumé des faits, les références utiles, une demande claire et un PDF prêt à envoyer. Vous pouvez aussi copier le texte pour le modifier." },
-    { q: "Y a-t-il un abonnement ou une commission ?", a: "Non. Le paiement est unique : 9€ pour générer votre lettre. Plaidezy ne prend aucune commission sur les sommes que vous pourriez récupérer." },
+    { q: "Y a-t-il un abonnement ou une commission ?", a: "Non. Le paiement est unique : 9 € pour générer votre lettre. Plaidezy ne prend aucune commission sur les sommes que vous pourriez récupérer." },
     { q: "Que se passe-t-il si l'entreprise ne répond pas ?", a: "La lettre formalise votre démarche et fixe un délai de réponse. En cas de silence, vous pouvez ensuite contacter un médiateur, une association de consommateurs ou la juridiction compétente selon votre situation." },
     { q: "Mes données sont-elles confidentielles ?", a: "Oui. Vos informations servent à vérifier votre situation et rédiger votre lettre. Elles ne sont pas vendues. Évitez tout de même de saisir des informations inutiles ou trop sensibles." },
     { q: "Puis-je modifier la lettre ?", a: "Oui. Une fois générée, vous pouvez copier la lettre, l’ajuster si nécessaire, puis télécharger le PDF." },
@@ -884,11 +884,11 @@ function CTASection({ onStart }: { onStart: () => void }) {
       <div className="cta-block">
         <div className="cta-left">
           <h2>Une entreprise vous<br />doit de l'argent ?</h2>
-          <p>Vérification gratuite. 9€ uniquement si vous êtes éligible.</p>
+          <p>Vérification gratuite. 9 € uniquement si vous êtes éligible.</p>
         </div>
         <div className="cta-right">
           <button className="btn-cta" onClick={onStart}>Vérifier mon droit gratuitement</button>
-          <span className="cta-micro">9€ fixe · Zéro commission · Remboursé 7j</span>
+          <span className="cta-micro">9 € fixe · Zéro commission · Remboursé 7j</span>
         </div>
       </div>
     </section>
