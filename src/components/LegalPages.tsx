@@ -10,44 +10,39 @@ function LegalLayout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
+  const goHome = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    window.location.hash = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <div style={{ minHeight: "100vh", background: "var(--bg)" }}>
-      {/* Mini nav fixe */}
-      <nav style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        padding: "0 40px", height: 56,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: scrolled ? "rgba(250,250,248,0.9)" : "var(--bg)",
-        backdropFilter: scrolled ? "blur(8px)" : "none",
-        WebkitBackdropFilter: scrolled ? "blur(8px)" : "none",
-        borderBottom: scrolled ? "1px solid var(--border)" : "1px solid transparent",
-        transition: "all 0.3s",
-      }}>
-        <a href="#" onClick={(e) => { e.preventDefault(); window.location.hash = ""; window.location.reload(); }} style={{
-          fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 800,
-          color: "var(--ink)", textDecoration: "none", letterSpacing: -0.5,
-        }}>
-          Plaid<em style={{ fontStyle: "normal", color: "var(--green)" }}>ezy</em>
+    <div className="legal-shell">
+      <nav className={`legal-nav${scrolled ? " scrolled" : ""}`}>
+        <a href="/" onClick={goHome} className="legal-logo">
+          Plaid<em>ezy</em>
         </a>
-        <a href="#" onClick={(e) => { e.preventDefault(); window.location.hash = ""; window.location.reload(); }} style={{
-          fontSize: 13, fontWeight: 600, color: "var(--muted)",
-          textDecoration: "none", padding: "6px 14px", borderRadius: 6,
-          transition: "all 0.2s",
-        }}>
-          ← Retour
-        </a>
+        <div className="legal-nav-links">
+          <a href="#guides">Guides</a>
+          <a href="#aide">Aide</a>
+          <a href="/" onClick={goHome} className="legal-back">← Retour au site</a>
+        </div>
       </nav>
 
-      {/* Contenu */}
-      <main style={{ maxWidth: 700, margin: "0 auto", padding: "100px 40px 80px" }}>
-        {children}
+      <main className="legal-main">
+        <div className="legal-hero-card">
+          <div className="section-label legal-label">Plaidezy</div>
+          <div className="legal-content">
+            {children}
+          </div>
+        </div>
       </main>
 
-      {/* Footer simplifié */}
-      <footer style={{ padding: "24px 40px", borderTop: "1px solid var(--border)", textAlign: "center" }}>
-        <p style={{ fontSize: 12, color: "var(--light)" }}>
-          © {new Date().getFullYear()} Plaidezy · Outil d'assistance rédactionnelle
-        </p>
+      <footer className="legal-footer">
+        <div className="legal-footer-inner">
+          <span>Plaid<em>ezy</em></span>
+          <p>Outil d'assistance rédactionnelle · © {new Date().getFullYear()}</p>
+        </div>
       </footer>
     </div>
   );
@@ -57,16 +52,9 @@ function LegalLayout({ children }: { children: React.ReactNode }) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section style={{ marginBottom: 36 }}>
-      <h2 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 20, fontWeight: 700, color: "var(--ink)",
-        marginBottom: 12, letterSpacing: -0.5,
-        paddingBottom: 8, borderBottom: "1px solid var(--border)",
-      }}>
-        {title}
-      </h2>
-      <div style={{ fontSize: 14, lineHeight: 1.75, color: "var(--ink2)" }}>
+    <section className="legal-section">
+      <h2>{title}</h2>
+      <div className="legal-section-body">
         {children}
       </div>
     </section>
@@ -83,9 +71,9 @@ function AProposContent() {
   return (
     <div>
       <h1 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 32, fontWeight: 700, color: "var(--ink)",
-        marginBottom: 6, letterSpacing: -1,
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 40, fontWeight: 800, color: "var(--ink)",
+        marginBottom: 10, letterSpacing: -1.4, lineHeight: 1.08,
       }}>
         À propos de Plaidezy
       </h1>
@@ -128,9 +116,9 @@ function MentionsContent() {
   return (
     <div>
       <h1 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 32, fontWeight: 700, color: "var(--ink)",
-        marginBottom: 6, letterSpacing: -1,
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 40, fontWeight: 800, color: "var(--ink)",
+        marginBottom: 10, letterSpacing: -1.4, lineHeight: 1.08,
       }}>
         Mentions légales
       </h1>
@@ -171,9 +159,9 @@ function CGVContent() {
   return (
     <div>
       <h1 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 32, fontWeight: 700, color: "var(--ink)",
-        marginBottom: 6, letterSpacing: -1,
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 40, fontWeight: 800, color: "var(--ink)",
+        marginBottom: 10, letterSpacing: -1.4, lineHeight: 1.08,
       }}>
         Conditions Générales de Vente
       </h1>
@@ -223,9 +211,9 @@ function ConfidentialiteContent() {
   return (
     <div>
       <h1 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 32, fontWeight: 700, color: "var(--ink)",
-        marginBottom: 6, letterSpacing: -1,
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 40, fontWeight: 800, color: "var(--ink)",
+        marginBottom: 10, letterSpacing: -1.4, lineHeight: 1.08,
       }}>
         Politique de confidentialité
       </h1>
@@ -310,9 +298,9 @@ function ContactAideContent() {
   return (
     <div>
       <h1 style={{
-        fontFamily: "'Playfair Display', serif",
-        fontSize: 32, fontWeight: 700, color: "var(--ink)",
-        marginBottom: 6, letterSpacing: -1,
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 40, fontWeight: 800, color: "var(--ink)",
+        marginBottom: 10, letterSpacing: -1.4, lineHeight: 1.08,
       }}>
         Aide & contact
       </h1>
