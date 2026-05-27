@@ -4,11 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0D9488" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <title>Plaidezy — Réclamez ce qui vous appartient.</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- SEO -->
     <meta name="description" content="Vol annulé, amende injuste, caution bloquée ? Plaidezy génère votre lettre de réclamation en 2 minutes. 9€ fixe. Zéro commission. Satisfait ou remboursé." />
+    <meta name="keywords" content="lettre de réclamation, modèle lettre réclamation, vol retardé indemnisation, caution non rendue, colis perdu remboursement, amende stationnement contestation, retard SNCF remboursement" />
     <link rel="canonical" href="https://plaidezy.vercel.app/" />
 
     <!-- Open Graph -->
@@ -32,31 +34,46 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Plaidezy",
-      "url": "https://plaidezy.vercel.app",
-      "description": "Plaidezy génère des lettres de réclamation personnalisées : vol annulé, amende, caution non rendue, colis perdu.",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "9",
-        "priceCurrency": "EUR",
-        "description": "Génération de lettre de réclamation personnalisée"
-      },
-      "provider": {
-        "@type": "Organization",
-        "name": "Plaidezy",
-        "url": "https://plaidezy.vercel.app",
-        "email": "contact@plaidezy.com",
-        "areaServed": "FR",
-        "knowsLanguage": "fr"
-      },
-      "featureList": [
-        "Lettre de réclamation personnalisée par IA",
-        "Conformité EU261/2004",
-        "PDF professionnel téléchargeable",
-        "Satisfait ou remboursé 7 jours"
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://plaidezy.vercel.app/#organization",
+          "name": "Plaidezy",
+          "url": "https://plaidezy.vercel.app",
+          "email": "contact@plaidezy.com",
+          "areaServed": "FR",
+          "knowsLanguage": "fr"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://plaidezy.vercel.app/#website",
+          "name": "Plaidezy",
+          "url": "https://plaidezy.vercel.app",
+          "inLanguage": "fr-FR",
+          "publisher": { "@id": "https://plaidezy.vercel.app/#organization" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Plaidezy",
+          "url": "https://plaidezy.vercel.app",
+          "description": "Plaidezy génère des lettres de réclamation personnalisées pour les litiges du quotidien : vol annulé, amende, caution non rendue, colis perdu, retard SNCF.",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "offers": {
+            "@type": "Offer",
+            "price": "9",
+            "priceCurrency": "EUR",
+            "description": "Génération d'une lettre de réclamation personnalisée"
+          },
+          "provider": { "@id": "https://plaidezy.vercel.app/#organization" },
+          "featureList": [
+            "Lettre de réclamation personnalisée par IA",
+            "PDF et Word téléchargeables",
+            "Lettre modifiable avant téléchargement",
+            "Guides pratiques de réclamation",
+            "Satisfait ou remboursé 7 jours"
+          ]
+        }
       ]
     }
     </script>
@@ -82,5 +99,5 @@
     </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a00feeddfa3ae17f',t:'MTc3OTY2Mzc5OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a028a881eb5b5dd1',t:'MTc3OTkyMzA2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

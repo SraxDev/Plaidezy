@@ -12,7 +12,8 @@ function LegalLayout({ children }: { children: React.ReactNode }) {
 
   const goHome = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    window.location.hash = "";
+    window.history.pushState(null, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -23,8 +24,8 @@ function LegalLayout({ children }: { children: React.ReactNode }) {
           Plaid<em>ezy</em>
         </a>
         <div className="legal-nav-links">
-          <a href="#guides">Guides</a>
-          <a href="#aide">Aide</a>
+          <a href="/guides">Guides</a>
+          <a href="/aide">Aide</a>
           <a href="/" onClick={goHome} className="legal-back">← Retour au site</a>
         </div>
       </nav>
@@ -145,7 +146,7 @@ function MentionsContent() {
       </Section>
 
       <Section title="Données personnelles">
-        <p>Les données personnelles collectées lors de l'utilisation du service sont traitées conformément au RGPD. Pour plus d'informations, consultez notre <a href="#confidentialite" style={linkStyle}>Politique de confidentialité</a>.</p>
+        <p>Les données personnelles collectées lors de l'utilisation du service sont traitées conformément au RGPD. Pour plus d'informations, consultez notre <a href="/confidentialite" style={linkStyle}>Politique de confidentialité</a>.</p>
       </Section>
 
       <Section title="Médiation">
@@ -201,7 +202,7 @@ function CGVContent() {
       </Section>
 
       <Section title="Droit applicable">
-        <p>Les présentes CGV sont soumises au droit français. Consultez notre <a href="#confidentialite" style={linkStyle}>Politique de confidentialité</a>.</p>
+        <p>Les présentes CGV sont soumises au droit français. Consultez notre <a href="/confidentialite" style={linkStyle}>Politique de confidentialité</a>.</p>
       </Section>
     </div>
   );

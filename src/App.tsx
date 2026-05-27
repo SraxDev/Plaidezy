@@ -22,6 +22,7 @@ function ModalLoading() {
 }
 
 const STORAGE_KEY = "plaidezy_session";
+const SITE_URL = "https://plaidezy.vercel.app";
 
 const trackEvent = (name: string, data: Record<string, unknown> = {}) => {
   try {
@@ -52,8 +53,8 @@ const navigateToLandingSection = (id: string) => {
   // les sections de la landing ne sont pas montées dans le DOM. On revient
   // d'abord sur la landing, puis on scrolle après le rendu React.
   if (!document.getElementById(id)) {
-    window.history.pushState(null, "", window.location.pathname + window.location.search);
-    window.dispatchEvent(new Event("hashchange"));
+    window.history.pushState(null, "", "/");
+    window.dispatchEvent(new PopStateEvent("popstate"));
     setTimeout(runScroll, 80);
     setTimeout(runScroll, 260);
     return;
@@ -62,7 +63,21 @@ const navigateToLandingSection = (id: string) => {
   runScroll();
 };
 
+const navigateToPage = (path: string) => {
+  const target = path.startsWith("/") ? path : `/${path}`;
+  if (window.location.pathname === target && !window.location.hash) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  window.history.pushState(null, "", target);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 60);
+};
+
 const navigateToHashPage = (hash: string) => {
+  // Compatibilité avec les anciens liens en #hash
+  if (hash === "#guides") { navigateToPage("/guides"); return; }
+  if (hash.startsWith("#guide-")) { navigateToPage(`/guides/${hash.replace("#guide-", "")}`); return; }
   if (window.location.hash === hash) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
@@ -176,13 +191,13 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
     <>
       <a href="#main-content" className="skip-link">Aller au contenu principal</a>
       <nav className={`nav-bar${scrolled ? " scrolled" : ""}`} role="navigation" aria-label="Navigation principale">
-        <a href="/" className="logo" onClick={(e) => { e.preventDefault(); window.location.hash = ""; window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+        <a href="/" className="logo" onClick={(e) => { e.preventDefault(); navigateToPage("/"); }}>
           Plaid<em>ezy</em>
         </a>
         <ul className="nav-links">
           <li><a href="#services" className={!guidesActive && activeSection === "services" ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToLandingSection("services"); }}>Cas couverts</a></li>
           <li><a href="#comment" className={!guidesActive && activeSection === "comment" ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToLandingSection("comment"); }}>Comment ça marche</a></li>
-          <li><a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a></li>
+          <li><a href="/guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToPage("/guides"); }}>Guides</a></li>
           <li><a href="#faq" className={!guidesActive && activeSection === "faq" ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToLandingSection("faq"); }}>FAQ</a></li>
         </ul>
         <div className="nav-right" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -196,7 +211,7 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
         <div className="mobile-nav">
           <a href="#services" className={!guidesActive && activeSection === "services" ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("services"); }}>Cas couverts</a>
           <a href="#comment" className={!guidesActive && activeSection === "comment" ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("comment"); }}>Comment ça marche</a>
-          <a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToHashPage("#guides"); }}>Guides</a>
+          <a href="/guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToPage("/guides"); }}>Guides</a>
           <a href="#faq" className={!guidesActive && activeSection === "faq" ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("faq"); }}>FAQ</a>
           <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Vérifier mon droit</button>
         </div>
@@ -745,7 +760,7 @@ function GuidesTeaserSection() {
         </div>
         <div className="guides-grid">
           {guideArticles.slice(0, 3).map((guide) => (
-            <a className="guide-card" href={`#guide-${guide.slug}`} key={guide.slug}>
+            <a className="guide-card" href={`/guides/${guide.slug}`} onClick={(e) => { e.preventDefault(); navigateToPage(`/guides/${guide.slug}`); }} key={guide.slug}>
               <GuideVisualIcon iconKey={guide.iconKey} />
               <span className="guide-category">{guide.category} · {guide.readTime}</span>
               <h3>{guide.title}</h3>
@@ -755,7 +770,7 @@ function GuidesTeaserSection() {
           ))}
         </div>
         <div className="guides-more-row">
-          <a className="btn-outline guides-more" href="#guides">Voir tous les guides</a>
+          <a className="btn-outline guides-more" href="/guides" onClick={(e) => { e.preventDefault(); navigateToPage("/guides"); }}>Voir tous les guides</a>
         </div>
       </div>
     </section>
@@ -804,7 +819,7 @@ function GuidesPage() {
             <h2>{guide.title}</h2>
             <p>{guide.excerpt}</p>
             <div className="guide-actions">
-              <a className="guide-link" href={`#guide-${guide.slug}`}>Lire le guide <IconArrowRight /></a>
+              <a className="guide-link" href={`/guides/${guide.slug}`} onClick={(e) => { e.preventDefault(); navigateToPage(`/guides/${guide.slug}`); }}>Lire le guide <IconArrowRight /></a>
             </div>
           </article>
         ))}
@@ -820,22 +835,22 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
   const nextGuide = currentIndex >= 0 && currentIndex < guideArticles.length - 1 ? guideArticles[currentIndex + 1] : null;
   const scrollToArticlePart = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   const copyGuideLink = async () => {
-    const url = `${window.location.origin}${window.location.pathname}#guide-${guide.slug}`;
+    const url = `${window.location.origin}/guides/${guide.slug}`;
     try {
       await navigator.clipboard.writeText(url);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 1800);
     } catch {
-      window.location.hash = `#guide-${guide.slug}`;
+      navigateToPage(`/guides/${guide.slug}`);
     }
   };
 
   return (
     <main className="guide-article-page" id="main-content">
       <nav className="guide-breadcrumb" aria-label="Fil d’Ariane">
-        <a href="/" onClick={(e) => { e.preventDefault(); window.location.hash = ""; window.scrollTo({ top: 0, behavior: "smooth" }); }}>Accueil</a>
+        <a href="/" onClick={(e) => { e.preventDefault(); navigateToPage("/"); }}>Accueil</a>
         <span>/</span>
-        <a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a>
+        <a href="/guides" onClick={(e) => { e.preventDefault(); navigateToPage("/guides"); }}>Guides</a>
         <span>/</span>
         <strong>{guide.category}</strong>
       </nav>
@@ -890,13 +905,13 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
 
             <nav className="guide-next-prev" aria-label="Navigation entre les guides">
               {previousGuide ? (
-                <a href={`#guide-${previousGuide.slug}`} className="prev">
+                <a href={`/guides/${previousGuide.slug}`} className="prev" onClick={(e) => { e.preventDefault(); navigateToPage(`/guides/${previousGuide.slug}`); }}>
                   <span>← Guide précédent</span>
                   <strong>{previousGuide.title}</strong>
                 </a>
               ) : <span />}
               {nextGuide ? (
-                <a href={`#guide-${nextGuide.slug}`} className="next">
+                <a href={`/guides/${nextGuide.slug}`} className="next" onClick={(e) => { e.preventDefault(); navigateToPage(`/guides/${nextGuide.slug}`); }}>
                   <span>Guide suivant →</span>
                   <strong>{nextGuide.title}</strong>
                 </a>
@@ -1044,22 +1059,22 @@ function FooterSection() {
         <div className="footer-col">
           <h4>Guides populaires</h4>
           {popularGuides.map((guide) => (
-            <a key={guide.slug} href={`#guide-${guide.slug}`}>{guide.title}</a>
+            <a key={guide.slug} href={`/guides/${guide.slug}`} onClick={(e) => { e.preventDefault(); navigateToPage(`/guides/${guide.slug}`); }}>{guide.title}</a>
           ))}
         </div>
 
         <div className="footer-col">
           <h4>Plaidezy</h4>
-          <a href="#guides" onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Tous les guides</a>
-          <a href="#a-propos">À propos</a>
-          <a href="#aide">Aide / Contact</a>
+          <a href="/guides" onClick={(e) => { e.preventDefault(); navigateToPage("/guides"); }}>Tous les guides</a>
+          <a href="/a-propos">À propos</a>
+          <a href="/aide">Aide / Contact</a>
         </div>
 
         <div className="footer-col">
           <h4>Légal</h4>
-          <a href="#mentions-legales">Mentions légales</a>
-          <a href="#cgv">CGV</a>
-          <a href="#confidentialite">Confidentialité</a>
+          <a href="/mentions-legales">Mentions légales</a>
+          <a href="/cgv">CGV</a>
+          <a href="/confidentialite">Confidentialité</a>
         </div>
       </div>
       <p className="footer-legal footer-legal-rich">
@@ -1218,26 +1233,180 @@ function AppInner() {
     return () => { observer.disconnect(); window.removeEventListener("scroll", revealAll); };
   }, []);
 
-  const [hash, setHash] = useState(window.location.hash);
+  const [route, setRoute] = useState(() => ({ pathname: window.location.pathname, hash: window.location.hash }));
   useEffect(() => {
     const handler = () => {
-      setHash(window.location.hash);
-      if (window.location.hash === "#guides" || window.location.hash.startsWith("#guide-")) {
+      setRoute({ pathname: window.location.pathname, hash: window.location.hash });
+      const path = window.location.pathname;
+      if (path === "/guides" || path.startsWith("/guides/") || window.location.hash === "#guides" || window.location.hash.startsWith("#guide-")) {
         setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
       }
     };
     window.addEventListener("hashchange", handler);
-    return () => window.removeEventListener("hashchange", handler);
+    window.addEventListener("popstate", handler);
+    return () => {
+      window.removeEventListener("hashchange", handler);
+      window.removeEventListener("popstate", handler);
+    };
   }, []);
 
-  if (hash === "#aide") return <ContactAide />;
-  if (hash === "#a-propos") return <APropos />;
-  if (hash === "#mentions-legales") return <MentionsLegales />;
-  if (hash === "#cgv") return <CGV />;
-  if (hash === "#confidentialite") return <Confidentialite />;
+  const normalizedPath = route.pathname.replace(/\/$/, "") || "/";
+  const hash = route.hash;
+  const pathGuideSlug = normalizedPath.startsWith("/guides/") ? decodeURIComponent(normalizedPath.replace("/guides/", "")) : null;
+  const hashGuideSlug = hash.startsWith("#guide-") ? hash.replace("#guide-", "") : null;
+  const activeGuide = guideArticles.find((guide) => guide.slug === (pathGuideSlug || hashGuideSlug)) || null;
+  const isGuidesRoute = normalizedPath === "/guides" || hash === "#guides";
 
-  const activeGuide = guideArticles.find((guide) => hash === `#guide-${guide.slug}`) || null;
-  const isGuidesRoute = hash === "#guides";
+  useEffect(() => {
+    const title = activeGuide
+      ? `${activeGuide.title} | Guide Plaidezy`
+      : isGuidesRoute
+        ? "Guides pratiques de réclamation | Plaidezy"
+        : "Plaidezy — Réclamez ce qui vous appartient.";
+    const description = activeGuide
+      ? activeGuide.excerpt
+      : isGuidesRoute
+        ? "Guides pratiques pour comprendre vos droits, préparer vos justificatifs et envoyer une réclamation claire."
+        : "Vol annulé, amende injuste, caution bloquée ? Plaidezy génère votre lettre de réclamation en 2 minutes. 9 € fixe. Zéro commission.";
+    const path = activeGuide ? `/guides/${activeGuide.slug}` : isGuidesRoute ? "/guides" : normalizedPath === "/" ? "/" : normalizedPath;
+    const canonical = `${SITE_URL}${path}`;
+    document.title = title;
+    const setMeta = (selector: string, attr: string, value: string) => {
+      const el = document.head.querySelector(selector);
+      if (el) el.setAttribute(attr, value);
+    };
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('link[rel="canonical"]', "href", canonical);
+    setMeta('meta[property="og:title"]', "content", title);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:url"]', "content", canonical);
+    setMeta('meta[property="og:type"]', "content", activeGuide ? "article" : "website");
+    setMeta('meta[name="twitter:title"]', "content", title);
+    setMeta('meta[name="twitter:description"]', "content", description);
+  }, [activeGuide, isGuidesRoute, normalizedPath]);
+
+  useEffect(() => {
+    const existing = document.getElementById("plaidezy-dynamic-schema");
+    existing?.remove();
+
+    const currentUrl = activeGuide
+      ? `${SITE_URL}/guides/${activeGuide.slug}`
+      : isGuidesRoute
+        ? `${SITE_URL}/guides`
+        : `${SITE_URL}${normalizedPath === "/" ? "/" : normalizedPath}`;
+
+    const organization = {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Plaidezy",
+      url: SITE_URL,
+      email: "contact@plaidezy.com",
+      areaServed: "FR",
+      knowsLanguage: "fr",
+    };
+
+    const breadcrumbItems = activeGuide
+      ? [
+          { name: "Accueil", url: `${SITE_URL}/` },
+          { name: "Guides", url: `${SITE_URL}/guides` },
+          { name: activeGuide.title, url: currentUrl },
+        ]
+      : isGuidesRoute
+        ? [
+            { name: "Accueil", url: `${SITE_URL}/` },
+            { name: "Guides", url: currentUrl },
+          ]
+        : [];
+
+    const breadcrumb = breadcrumbItems.length ? {
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        item: item.url,
+      })),
+    } : null;
+
+    const schema = activeGuide ? {
+      "@context": "https://schema.org",
+      "@graph": [
+        organization,
+        breadcrumb,
+        {
+          "@type": "Article",
+          "@id": `${currentUrl}#article`,
+          headline: activeGuide.title,
+          description: activeGuide.excerpt,
+          url: currentUrl,
+          mainEntityOfPage: currentUrl,
+          inLanguage: "fr-FR",
+          articleSection: activeGuide.category,
+          dateModified: "2026-05-27",
+          datePublished: "2026-05-27",
+          author: { "@id": `${SITE_URL}/#organization` },
+          publisher: { "@id": `${SITE_URL}/#organization` },
+          keywords: [activeGuide.category, "réclamation", "lettre de réclamation", "droits consommateurs", "Plaidezy"],
+        },
+      ].filter(Boolean),
+    } : isGuidesRoute ? {
+      "@context": "https://schema.org",
+      "@graph": [
+        organization,
+        breadcrumb,
+        {
+          "@type": "CollectionPage",
+          "@id": `${currentUrl}#collection`,
+          name: "Guides pratiques de réclamation",
+          description: "Guides pratiques pour comprendre vos droits, préparer vos justificatifs et envoyer une réclamation claire.",
+          url: currentUrl,
+          inLanguage: "fr-FR",
+          mainEntity: {
+            "@type": "ItemList",
+            itemListElement: guideArticles.map((guide, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              url: `${SITE_URL}/guides/${guide.slug}`,
+              name: guide.title,
+            })),
+          },
+        },
+      ].filter(Boolean),
+    } : {
+      "@context": "https://schema.org",
+      "@graph": [
+        organization,
+        {
+          "@type": "WebSite",
+          "@id": `${SITE_URL}/#website`,
+          name: "Plaidezy",
+          url: SITE_URL,
+          inLanguage: "fr-FR",
+          publisher: { "@id": `${SITE_URL}/#organization` },
+        },
+        {
+          "@type": "SoftwareApplication",
+          name: "Plaidezy",
+          url: SITE_URL,
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          offers: { "@type": "Offer", price: "9", priceCurrency: "EUR" },
+        },
+      ],
+    };
+
+    const script = document.createElement("script");
+    script.id = "plaidezy-dynamic-schema";
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+  }, [activeGuide, isGuidesRoute, normalizedPath]);
+
+  if (normalizedPath === "/aide" || hash === "#aide") return <ContactAide />;
+  if (normalizedPath === "/a-propos" || hash === "#a-propos") return <APropos />;
+  if (normalizedPath === "/mentions-legales" || hash === "#mentions-legales") return <MentionsLegales />;
+  if (normalizedPath === "/cgv" || hash === "#cgv") return <CGV />;
+  if (normalizedPath === "/confidentialite" || hash === "#confidentialite") return <Confidentialite />;
 
   return (
     <>
