@@ -4666,3 +4666,34 @@ footer .footer-rich {
     height: 40px;
   }
 }
+
+/* Finitions UX : scrollspy navbar + compteur filtres */
+.guide-filter-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.guide-filter-bar button span {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 900;
+  transition: all 0.2s ease;
+}
+.guide-filter-bar button.active span,
+.guide-filter-bar button:hover span {
+  background: #fff;
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.10);
+}
+.mobile-nav a.active {
+  color: var(--primary-dark);
+  background: var(--primary-light);
+}

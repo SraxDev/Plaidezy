@@ -147,7 +147,8 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeHash, setActiveHash] = useState(window.location.hash);
-  const guidesActive = activeHash === "#guides" || activeHash.startsWith("#guide-");
+  const [activeSection, setActiveSection] = useState("main-content");
+  const guidesActive = activeHash === "#guides" || activeHash.startsWith("#guide-") || activeSection === "guides-preview";
   useEffect(() => {
     const syncHash = () => setActiveHash(window.location.hash);
     window.addEventListener("hashchange", syncHash);
@@ -158,6 +159,19 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
   }, []);
+  useEffect(() => {
+    const ids = ["main-content", "services", "comment", "guides-preview", "faq"];
+    const elements = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
+    if (!elements.length) return;
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible?.target?.id) setActiveSection(visible.target.id);
+    }, { rootMargin: "-35% 0px -55% 0px", threshold: [0.05, 0.15, 0.3] });
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [activeHash]);
   return (
     <>
       <a href="#main-content" className="skip-link">Aller au contenu principal</a>
@@ -166,10 +180,10 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
           Plaid<em>ezy</em>
         </a>
         <ul className="nav-links">
-          <li><a href="#services" onClick={(e) => { e.preventDefault(); navigateToLandingSection("services"); }}>Cas couverts</a></li>
-          <li><a href="#comment" onClick={(e) => { e.preventDefault(); navigateToLandingSection("comment"); }}>Comment ça marche</a></li>
+          <li><a href="#services" className={!guidesActive && activeSection === "services" ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToLandingSection("services"); }}>Cas couverts</a></li>
+          <li><a href="#comment" className={!guidesActive && activeSection === "comment" ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToLandingSection("comment"); }}>Comment ça marche</a></li>
           <li><a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToHashPage("#guides"); }}>Guides</a></li>
-          <li><a href="#faq" onClick={(e) => { e.preventDefault(); navigateToLandingSection("faq"); }}>FAQ</a></li>
+          <li><a href="#faq" className={!guidesActive && activeSection === "faq" ? "active" : ""} onClick={(e) => { e.preventDefault(); navigateToLandingSection("faq"); }}>FAQ</a></li>
         </ul>
         <div className="nav-right" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <button className="nav-btn" onClick={onOpenWizard}>Vérifier mon droit</button>
@@ -180,10 +194,10 @@ function Navigation({ onOpenWizard }: { onOpenWizard: () => void }) {
       </nav>
       {menuOpen && (
         <div className="mobile-nav">
-          <a href="#services" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("services"); }}>Cas couverts</a>
-          <a href="#comment" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("comment"); }}>Comment ça marche</a>
+          <a href="#services" className={!guidesActive && activeSection === "services" ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("services"); }}>Cas couverts</a>
+          <a href="#comment" className={!guidesActive && activeSection === "comment" ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("comment"); }}>Comment ça marche</a>
           <a href="#guides" className={guidesActive ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToHashPage("#guides"); }}>Guides</a>
-          <a href="#faq" onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("faq"); }}>FAQ</a>
+          <a href="#faq" className={!guidesActive && activeSection === "faq" ? "active" : ""} onClick={(e) => { e.preventDefault(); setMenuOpen(false); navigateToLandingSection("faq"); }}>FAQ</a>
           <button className="nav-btn" style={{ borderRadius: "8px" }} onClick={() => { setMenuOpen(false); onOpenWizard(); }}>Vérifier mon droit</button>
         </div>
       )}
@@ -763,16 +777,22 @@ function GuidesPage() {
         <p>Délais, justificatifs, montants, erreurs à éviter : choisissez un guide et avancez étape par étape, sans jargon.</p>
       </section>
       <div className="guide-filter-bar" role="tablist" aria-label="Filtrer les guides">
-        {categories.map((category) => (
-          <button
-            key={category}
-            className={selectedCategory === category ? "active" : ""}
-            onClick={() => setSelectedCategory(category)}
-            type="button"
-          >
-            {category}
-          </button>
-        ))}
+        {categories.map((category) => {
+          const count = category === "Tous"
+            ? guideArticles.length
+            : guideArticles.filter((guide) => guide.category === category).length;
+          return (
+            <button
+              key={category}
+              className={selectedCategory === category ? "active" : ""}
+              onClick={() => setSelectedCategory(category)}
+              type="button"
+            >
+              {category}
+              <span>{count}</span>
+            </button>
+          );
+        })}
       </div>
       <section className="guides-page-grid">
         {filteredGuides.map((guide) => (
