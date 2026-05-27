@@ -4559,3 +4559,45 @@ footer .footer-rich {
     align-items: flex-start !important;
   }
 }
+
+/* Petites finitions UX */
+.guides-page,
+.guide-article-page,
+.legal-main {
+  animation: pageFadeInUp 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes pageFadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.guide-copy-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 2px auto 0;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.guide-copy-link:hover {
+  transform: translateY(-1px);
+  background: #BFF7EC;
+  box-shadow: 0 8px 18px rgba(13, 148, 136, 0.14);
+}
+.guide-copy-link:active {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .guides-page,
+  .guide-article-page,
+  .legal-main {
+    animation: none;
+  }
+}

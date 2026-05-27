@@ -353,7 +353,7 @@ export default function LetterBuilder({ claim, answers, onClose, onEdit }: Lette
               {generating ? (
                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <div className="analysis-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
-                  L'IA rédige votre lettre…
+                  Rédaction de votre lettre personnalisée…
                 </span>
               ) : (
                 <>Générer ma lettre personnalisée</>
@@ -363,7 +363,7 @@ export default function LetterBuilder({ claim, answers, onClose, onEdit }: Lette
 
           {!letterText && (
             <p style={{ fontSize: 12, color: "var(--muted)", textAlign: "center", marginTop: 10, marginBottom: 8, fontWeight: 700 }}>
-              Rédaction assistée par IA à partir de vos réponses.
+              {generating ? "Cela peut prendre quelques secondes." : "Rédaction assistée par IA à partir de vos réponses."}
             </p>
           )}
 
@@ -454,7 +454,7 @@ export default function LetterBuilder({ claim, answers, onClose, onEdit }: Lette
                   />
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 8, fontSize: 11, color: "var(--light)", fontWeight: 700 }}>
                     <span>{letterText.length.toLocaleString("fr-FR")} caractères</span>
-                    <span>Sauvegarde automatique</span>
+                    <span>✓ Sauvegardé</span>
                   </div>
                 </div>
               )}

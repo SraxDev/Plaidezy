@@ -794,10 +794,21 @@ function GuidesPage() {
 }
 
 function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: () => void }) {
+  const [linkCopied, setLinkCopied] = useState(false);
   const currentIndex = guideArticles.findIndex((item) => item.slug === guide.slug);
   const previousGuide = currentIndex > 0 ? guideArticles[currentIndex - 1] : null;
   const nextGuide = currentIndex >= 0 && currentIndex < guideArticles.length - 1 ? guideArticles[currentIndex + 1] : null;
   const scrollToArticlePart = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const copyGuideLink = async () => {
+    const url = `${window.location.origin}${window.location.pathname}#guide-${guide.slug}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1800);
+    } catch {
+      window.location.hash = `#guide-${guide.slug}`;
+    }
+  };
 
   return (
     <main className="guide-article-page" id="main-content">
@@ -815,6 +826,9 @@ function GuideArticlePage({ guide, onStart }: { guide: GuideArticle; onStart: ()
           <span className="guide-category">{guide.category} · {guide.readTime}</span>
           <h1>{guide.title}</h1>
           <p>{guide.intro}</p>
+          <button className="guide-copy-link" type="button" onClick={copyGuideLink}>
+            {linkCopied ? "✓ Lien copié" : "Copier le lien"}
+          </button>
         </header>
 
         <div className="guide-reading-layout">
