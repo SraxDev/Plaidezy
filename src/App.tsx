@@ -1068,6 +1068,57 @@ function MobileSticky({ onStart }: { onStart: () => void }) {
   );
 }
 
+function ReadingProgress({ enabled }: { enabled: boolean }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) { setProgress(0); return; }
+    const update = () => {
+      const scrollTop = window.scrollY;
+      const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      setProgress(Math.min(100, Math.max(0, (scrollTop / max) * 100)));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [enabled]);
+
+  if (!enabled) return null;
+  return (
+    <div className="reading-progress" aria-hidden="true">
+      <div style={{ width: `${progress}%` }} />
+    </div>
+  );
+}
+
+function ScrollTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const update = () => setVisible(window.scrollY > 700);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  return (
+    <button
+      className={`scroll-top-btn${visible ? " visible" : ""}`}
+      type="button"
+      aria-label="Retour en haut"
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="18 15 12 9 6 15" />
+      </svg>
+    </button>
+  );
+}
+
 /* ─── MAIN APP ─── */
 function AppInner() {
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -1171,6 +1222,7 @@ function AppInner() {
   return (
     <>
       <Navigation onOpenWizard={openWizard} />
+      <ReadingProgress enabled={!!activeGuide} />
 
       {activeGuide ? (
         <GuideArticlePage guide={activeGuide} onStart={() => openWizardWithClaim(activeGuide.claimId)} />
@@ -1194,6 +1246,7 @@ function AppInner() {
       )}
 
       <FooterSection />
+      <ScrollTopButton />
 
       {paymentReturn.verifying && (
         <div className="modal-backdrop">
