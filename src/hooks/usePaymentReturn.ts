@@ -43,13 +43,13 @@ export function usePaymentReturn() {
     } catch { /* noop */ }
 
     if (!session) {
-      setState((s) => ({ ...s, error: "Session expirée. Contactez contact@plaidezy.com." }));
+      setState((s) => ({ ...s, error: "Session expirée. Contactez contactplaidezy@proton.me." }));
       return;
     }
 
     const claim = claimTypes.find((c) => c.id === session!.claimId) || null;
     if (!claim) {
-      setState((s) => ({ ...s, error: "Session invalide. Contactez contact@plaidezy.com." }));
+      setState((s) => ({ ...s, error: "Session invalide. Contactez contactplaidezy@proton.me." }));
       return;
     }
 
@@ -63,7 +63,7 @@ export function usePaymentReturn() {
       setState((s) => ({
         ...s,
         verifying: false,
-        error: "La vérification a expiré. Contactez contact@plaidezy.com.",
+        error: "La vérification a expiré. Contactez contactplaidezy@proton.me.",
       }));
     }, 15000);
 
@@ -85,7 +85,7 @@ export function usePaymentReturn() {
           setState((s) => ({
             ...s,
             verifying: false,
-            error: data.error || "Paiement non vérifié. Réessayez ou contactez contact@plaidezy.com.",
+            error: data.error || "Paiement non vérifié. Réessayez ou contactez contactplaidezy@proton.me.",
           }));
         }
       })
@@ -94,7 +94,7 @@ export function usePaymentReturn() {
         setState((s) => ({
           ...s,
           verifying: false,
-          error: "Impossible de vérifier le paiement. Contactez contact@plaidezy.com.",
+          error: "Impossible de vérifier le paiement. Contactez contactplaidezy@proton.me.",
         }));
       });
   }, []);

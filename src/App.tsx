@@ -975,7 +975,7 @@ function UpcomingCasesSection() {
             <strong>Vous voulez un autre cas ?</strong>
             <span>Dites-nous ce qu’il faudrait ajouter en priorité.</span>
           </div>
-          <a href="mailto:contact@plaidezy.com?subject=Nouveau%20cas%20Plaidezy" className="upcoming-vote-btn">Proposer un cas</a>
+          <a href="mailto:contactplaidezy@proton.me?subject=Nouveau%20cas%20Plaidezy" className="upcoming-vote-btn">Proposer un cas</a>
         </div>
       </div>
     </section>
@@ -1300,7 +1300,7 @@ function AppInner() {
       "@id": `${SITE_URL}/#organization`,
       name: "Plaidezy",
       url: SITE_URL,
-      email: "contact@plaidezy.com",
+      email: "contactplaidezy@proton.me",
       areaServed: "FR",
       knowsLanguage: "fr",
     };

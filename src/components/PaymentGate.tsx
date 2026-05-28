@@ -138,7 +138,7 @@ export default function PaymentGate({ claim, answers, amount, onPaid, onClose, o
             </div>
 
             <a
-              href={`mailto:contact@plaidezy.com?subject=Réclamation%20-%20Paiement`}
+              href={`mailto:contactplaidezy@proton.me?subject=Réclamation%20-%20Paiement`}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 background: "var(--green)", color: "#fff", padding: "12px 24px",
@@ -148,7 +148,7 @@ export default function PaymentGate({ claim, answers, amount, onPaid, onClose, o
             >
               Nous contacter par email →
             </a>
-            <p style={{ fontSize: 12, color: "var(--light)", marginTop: 12 }}>contact@plaidezy.com · Réponse sous 24h</p>
+            <p style={{ fontSize: 12, color: "var(--light)", marginTop: 12 }}>contactplaidezy@proton.me · Réponse sous 24h</p>
           </div>
         </div>
       </div>

@@ -62,8 +62,8 @@ export default class ErrorBoundary extends Component<Props, State> {
             </button>
             <p style={{ fontSize: 12, color: "var(--light, #999)", marginTop: 16 }}>
               Si le problème persiste :{" "}
-              <a href="mailto:contact@plaidezy.com" style={{ color: "var(--green, #2D6A4F)", textDecoration: "underline" }}>
-                contact@plaidezy.com
+              <a href="mailto:contactplaidezy@proton.me" style={{ color: "var(--green, #2D6A4F)", textDecoration: "underline" }}>
+                contactplaidezy@proton.me
               </a>
             </p>
           </div>
