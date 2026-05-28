@@ -308,8 +308,21 @@ function ContactAideContent() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
+  const selectedCard = supportCards.find((card) => card.id === type) || supportCards[0];
+  const messageMinLength = 10;
+  const messageMaxLength = 1200;
+  const messageLength = message.trim().length;
+  const canSubmit = email.trim().includes("@") && messageLength >= messageMinLength && !submitting;
+  const placeholders: Record<string, string> = {
+    paiement: "Ex: J’ai payé mais je suis resté bloqué sur la page de retour. Mon paiement date d’environ 14h30...",
+    lettre: "Ex: La lettre générée ne mentionne pas mon justificatif / je n’arrive pas à télécharger le PDF...",
+    remboursement: "Ex: Je souhaite demander un remboursement car la lettre ne correspond pas à ma situation...",
+    autre: "Décrivez votre demande ou le nouveau cas que vous aimeriez voir ajouté...",
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     setSubmitting(true);
     setError("");
     setSent(false);
@@ -342,84 +355,99 @@ function ContactAideContent() {
       <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Une question avant ou après la génération de votre lettre ? Écrivez-nous directement depuis ce formulaire.</p>
 
       <Section title="Envoyer un message au support">
-        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
-          <div style={{ display: "grid", gap: 12 }}>
+        <div className="support-intro-card">
+          <div>
+            <strong>Réponse sous 24h ouvrées</strong>
+            <span>Plus votre message est précis, plus on pourra vous aider vite.</span>
+          </div>
+          <span>Support Plaidezy</span>
+        </div>
+
+        <form onSubmit={handleSubmit} className="support-form">
+          <div className="support-step">
+            <span>1</span>
+            <div>
+              <strong>Choisissez le sujet</strong>
+              <p>Sélectionnez le type de demande le plus proche de votre situation.</p>
+            </div>
+          </div>
+
+          <div className="support-card-grid" role="radiogroup" aria-label="Sujet de la demande">
             {supportCards.map((card) => (
               <button
                 key={card.id}
                 type="button"
-                onClick={() => setType(card.id)}
-                style={{
-                  display: "block",
-                  textAlign: "left",
-                  padding: "16px 18px",
-                  borderRadius: 14,
-                  border: type === card.id ? "1.5px solid var(--green)" : "1px solid var(--border)",
-                  background: type === card.id ? "var(--green-light)" : "var(--surface)",
-                  boxShadow: "var(--shadow-sm)",
-                  cursor: "pointer",
-                }}
+                role="radio"
+                aria-checked={type === card.id}
+                onClick={() => { setType(card.id); setError(""); }}
+                className={`support-choice${type === card.id ? " selected" : ""}`}
               >
-                <strong style={{ display: "block", color: "var(--ink)", fontSize: 14, marginBottom: 4 }}>{card.title}</strong>
-                <span style={{ display: "block", color: "var(--muted)", fontSize: 13, lineHeight: 1.55 }}>{card.text}</span>
+                <span className="support-choice-dot" />
+                <strong>{card.title}</strong>
+                <small>{card.text}</small>
               </button>
             ))}
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--ink)", marginBottom: 6 }}>Votre email</label>
+          <div className="support-selected-help">
+            <strong>{selectedCard.title}</strong>
+            <span>{selectedCard.text}</span>
+          </div>
+
+          <div className="support-step">
+            <span>2</span>
+            <div>
+              <strong>Vos coordonnées</strong>
+              <p>On utilisera cet email uniquement pour vous répondre.</p>
+            </div>
+          </div>
+
+          <div className="support-field">
+            <label>Votre email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="vous@email.com"
-              style={{
-                width: "100%",
-                border: "1.5px solid var(--border)",
-                borderRadius: 12,
-                padding: "14px 16px",
-                fontSize: 14,
-                outline: "none",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
+              autoComplete="email"
             />
           </div>
 
-          <div>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--ink)", marginBottom: 6 }}>Votre message</label>
+          <div className="support-step">
+            <span>3</span>
+            <div>
+              <strong>Votre message</strong>
+              <p>Ajoutez les détails utiles : cas concerné, paiement, référence, problème rencontré.</p>
+            </div>
+          </div>
+
+          <div className="support-field">
+            <label>Message</label>
             <textarea
               required
-              minLength={10}
+              minLength={messageMinLength}
+              maxLength={messageMaxLength}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Expliquez votre demande, votre problème ou le cas que vous souhaitez voir ajouté..."
-              rows={6}
-              style={{
-                width: "100%",
-                border: "1.5px solid var(--border)",
-                borderRadius: 12,
-                padding: "14px 16px",
-                fontSize: 14,
-                lineHeight: 1.6,
-                outline: "none",
-                resize: "vertical",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
+              placeholder={placeholders[type] || placeholders.autre}
+              rows={7}
             />
-            <p style={{ marginTop: 6, fontSize: 12, color: "var(--muted)" }}>Réponse généralement sous 24h ouvrées à l’adresse indiquée.</p>
+            <div className="support-field-meta">
+              <span>{messageLength < messageMinLength ? `${messageMinLength - messageLength} caractères minimum restants` : "Message suffisamment détaillé"}</span>
+              <span>{message.length}/{messageMaxLength}</span>
+            </div>
           </div>
 
-          {error && <p style={{ color: "var(--accent)", fontSize: 13, fontWeight: 700 }}>{error}</p>}
-          {sent && <p style={{ color: "var(--green)", fontSize: 13, fontWeight: 800 }}>✓ Message envoyé. Nous vous répondrons dès que possible.</p>}
+          {error && <div className="support-alert error">{error}</div>}
+          {sent && <div className="support-alert success">✓ Message envoyé. Nous vous répondrons dès que possible.</div>}
 
-          <button
-            type="submit"
-            className="wizard-btn-next"
-            disabled={submitting}
-            style={{ width: "100%", padding: "14px 20px" }}
-          >
-            {submitting ? "Envoi en cours…" : "Envoyer mon message"}
+          <button type="submit" className="support-submit" disabled={!canSubmit}>
+            {submitting ? (
+              <span><span className="support-mini-spinner" /> Envoi en cours…</span>
+            ) : (
+              "Envoyer mon message"
+            )}
           </button>
         </form>
       </Section>
