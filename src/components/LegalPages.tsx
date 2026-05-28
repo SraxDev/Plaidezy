@@ -440,7 +440,7 @@ function ContactAideContent() {
           </div>
 
           {error && <div className="support-alert error">{error}</div>}
-          {sent && <div className="support-alert success">✓ Message envoyé. Nous vous répondrons dès que possible.</div>}
+          {sent && <div className="support-alert success">✓ Message envoyé. Il apparaît maintenant dans votre espace support.</div>}
 
           <button type="submit" className="support-submit" disabled={!canSubmit}>
             {submitting ? (
@@ -476,8 +476,147 @@ function ContactAideContent() {
   );
 }
 
+
+type SupportMessage = {
+  id: number;
+  email: string;
+  type: string;
+  type_label?: string;
+  message: string;
+  page?: string;
+  user_agent?: string;
+  status: "new" | "read" | "closed";
+  created_at: string;
+};
+
+function SupportAdminContent() {
+  const [password, setPassword] = useState(() => sessionStorage.getItem("plaidezy_support_admin") || "");
+  const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [status, setStatus] = useState("all");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+
+  const loadMessages = async (overrideStatus = status) => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/support-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, status: overrideStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Impossible de charger les messages.");
+      setMessages(data.messages || []);
+      setAuthenticated(true);
+      sessionStorage.setItem("plaidezy_support_admin", password);
+    } catch (err) {
+      setAuthenticated(false);
+      setError(err instanceof Error ? err.message : "Erreur de chargement.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStatus = async (id: number, nextStatus: "new" | "read" | "closed") => {
+    try {
+      const res = await fetch("/api/support-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password, id, status: nextStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Mise à jour impossible.");
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, status: nextStatus } : m));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Mise à jour impossible.");
+    }
+  };
+
+  const formatDate = (date: string) => new Date(date).toLocaleString("fr-FR", {
+    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+
+  return (
+    <div>
+      <h1 style={{
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 40, fontWeight: 800, color: "var(--ink)",
+        marginBottom: 10, letterSpacing: -1.4, lineHeight: 1.08,
+      }}>
+        Espace support
+      </h1>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Consultez les messages envoyés depuis le formulaire Plaidezy.</p>
+
+      <Section title="Connexion">
+        <form onSubmit={(e) => { e.preventDefault(); loadMessages(); }} className="support-form">
+          <div className="support-field">
+            <label>Mot de passe support</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mot de passe admin"
+              autoComplete="current-password"
+            />
+          </div>
+          <button className="support-submit" type="submit" disabled={!password || loading}>
+            {loading ? "Chargement…" : authenticated ? "Actualiser les messages" : "Voir les messages"}
+          </button>
+          {error && <div className="support-alert error">{error}</div>}
+        </form>
+      </Section>
+
+      {authenticated && (
+        <Section title={`Messages (${messages.length})`}>
+          <div className="support-admin-toolbar">
+            {["all", "new", "read", "closed"].map((s) => (
+              <button
+                key={s}
+                className={status === s ? "active" : ""}
+                type="button"
+                onClick={() => { setStatus(s); loadMessages(s); }}
+              >
+                {s === "all" ? "Tous" : s === "new" ? "Nouveaux" : s === "read" ? "Lus" : "Clôturés"}
+              </button>
+            ))}
+          </div>
+
+          <div className="support-admin-list">
+            {messages.length === 0 ? (
+              <p style={{ color: "var(--muted)", fontSize: 14 }}>Aucun message pour ce filtre.</p>
+            ) : messages.map((msg) => (
+              <article className={`support-admin-card status-${msg.status}`} key={msg.id}>
+                <div className="support-admin-card-head">
+                  <div>
+                    <strong>#{msg.id} · {msg.type_label || msg.type}</strong>
+                    <span>{formatDate(msg.created_at)}</span>
+                  </div>
+                  <span className="support-admin-status">{msg.status === "new" ? "Nouveau" : msg.status === "read" ? "Lu" : "Clôturé"}</span>
+                </div>
+                <a href={`mailto:${msg.email}`} className="support-admin-email">{msg.email}</a>
+                <p>{msg.message}</p>
+                {msg.page && <small>Page : {msg.page}</small>}
+                <div className="support-admin-actions">
+                  <a href={`mailto:${msg.email}?subject=Re:%20Support%20Plaidezy%20%23${msg.id}`}>Répondre</a>
+                  <button type="button" onClick={() => updateStatus(msg.id, "read")}>Marquer lu</button>
+                  <button type="button" onClick={() => updateStatus(msg.id, "closed")}>Clôturer</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </Section>
+      )}
+    </div>
+  );
+}
+
 /* ───────── Exports avec Layout ───────── */
 
+export function SupportAdmin() {
+  return <LegalLayout><SupportAdminContent /></LegalLayout>;
+}
 export function ContactAide() {
   return <LegalLayout><ContactAideContent /></LegalLayout>;
 }

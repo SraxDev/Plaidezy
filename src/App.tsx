@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { MentionsLegales, CGV, Confidentialite, APropos, ContactAide } from "./components/LegalPages";
+import { MentionsLegales, CGV, Confidentialite, APropos, ContactAide, SupportAdmin } from "./components/LegalPages";
 import { claimTypes, type ClaimConfig } from "./lib/claims";
 import { usePaymentReturn } from "./hooks/usePaymentReturn";
 
@@ -1402,6 +1402,7 @@ function AppInner() {
     document.head.appendChild(script);
   }, [activeGuide, isGuidesRoute, normalizedPath]);
 
+  if (normalizedPath === "/support-admin") return <SupportAdmin />;
   if (normalizedPath === "/aide" || hash === "#aide") return <ContactAide />;
   if (normalizedPath === "/a-propos" || hash === "#a-propos") return <APropos />;
   if (normalizedPath === "/mentions-legales" || hash === "#mentions-legales") return <MentionsLegales />;
