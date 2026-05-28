@@ -975,7 +975,7 @@ function UpcomingCasesSection() {
             <strong>Vous voulez un autre cas ?</strong>
             <span>Dites-nous ce qu’il faudrait ajouter en priorité.</span>
           </div>
-          <a href="mailto:contactplaidezy@proton.me?subject=Nouveau%20cas%20Plaidezy" className="upcoming-vote-btn">Proposer un cas</a>
+          <a href="/aide" className="upcoming-vote-btn">Proposer un cas</a>
         </div>
       </div>
     </section>

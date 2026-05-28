@@ -103,11 +103,11 @@ function AProposContent() {
       </Section>
 
       <Section title="Confidentialité">
-        <p>Vos informations servent uniquement à vérifier votre situation et à générer votre lettre. Elles ne sont pas revendues. Vous pouvez nous contacter à tout moment pour toute demande relative à vos données : <span style={strongStyle}>contact@plaidezy.com</span>.</p>
+        <p>Vos informations servent uniquement à vérifier votre situation et à générer votre lettre. Elles ne sont pas revendues. Vous pouvez nous contacter à tout moment pour toute demande relative à vos données : <span style={strongStyle}>contactplaidezy@proton.me</span>.</p>
       </Section>
 
       <Section title="Contact">
-        <p>Une question, un remboursement, une suggestion ? Écrivez-nous à <a href="mailto:contact@plaidezy.com" style={linkStyle}>contact@plaidezy.com</a>.</p>
+        <p>Une question, un remboursement, une suggestion ? Utilisez notre <a href="/aide" style={linkStyle}>formulaire d’aide</a>.</p>
       </Section>
     </div>
   );
@@ -128,7 +128,7 @@ function MentionsContent() {
       <Section title="Éditeur du site">
         <p>Plaidezy est un service d'assistance rédactionnelle proposé sous forme de site internet.</p>
         <p style={{ marginTop: 8 }}><span style={strongStyle}>Raison sociale :</span> Plaidezy</p>
-        <p><span style={strongStyle}>Email :</span> contact@plaidezy.com</p>
+        <p><span style={strongStyle}>Email :</span> contactplaidezy@proton.me</p>
         <p><span style={strongStyle}>Statut :</span> Service de rédaction assistée par intelligence artificielle</p>
       </Section>
 
@@ -194,7 +194,7 @@ function CGVContent() {
 
       <Section title="Droit de rétractation">
         <p>Conformément aux articles L.221-18 et suivants du Code de la consommation, l'utilisateur dispose d'un délai de 14 jours pour exercer son droit de rétractation. Ce droit ne peut être exercé pour les services pleinement exécutés (article L.221-28).</p>
-        <p style={{ marginTop: 8 }}>Plaidezy propose une <span style={strongStyle}>garantie satisfait ou remboursé de 7 jours</span> : demande à adresser à contact@plaidezy.com.</p>
+        <p style={{ marginTop: 8 }}>Plaidezy propose une <span style={strongStyle}>garantie satisfait ou remboursé de 7 jours</span> : demande à adresser à contactplaidezy@proton.me.</p>
       </Section>
 
       <Section title="Responsabilité">
@@ -221,7 +221,7 @@ function ConfidentialiteContent() {
       <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Dernière mise à jour : juin 2025</p>
 
       <Section title="Responsable du traitement">
-        <p>Plaidezy, joignable à : contact@plaidezy.com.</p>
+        <p>Plaidezy, joignable à : contactplaidezy@proton.me.</p>
       </Section>
 
       <Section title="Données collectées">
@@ -262,7 +262,7 @@ function ConfidentialiteContent() {
       </Section>
 
       <Section title="Vos droits">
-        <p>Accès, rectification, effacement, limitation, portabilité, opposition. Contact : <span style={strongStyle}>contact@plaidezy.com</span></p>
+        <p>Accès, rectification, effacement, limitation, portabilité, opposition. Contact : <span style={strongStyle}>contactplaidezy@proton.me</span></p>
       </Section>
 
       <Section title="Cookies">
@@ -280,21 +280,55 @@ function ConfidentialiteContent() {
 function ContactAideContent() {
   const supportCards = [
     {
+      id: "paiement",
       title: "Problème de paiement",
       text: "Paiement débité, retour bloqué, lien SumUp expiré ou confirmation manquante.",
-      href: "mailto:contact@plaidezy.com?subject=Probl%C3%A8me%20de%20paiement%20Plaidezy",
     },
     {
+      id: "lettre",
       title: "Problème avec ma lettre",
       text: "Lettre incomplète, information à corriger, téléchargement PDF/Word impossible.",
-      href: "mailto:contact@plaidezy.com?subject=Probl%C3%A8me%20avec%20ma%20lettre%20Plaidezy",
     },
     {
+      id: "remboursement",
       title: "Demande de remboursement",
       text: "Vous souhaitez utiliser la garantie satisfait ou remboursé de 7 jours.",
-      href: "mailto:contact@plaidezy.com?subject=Demande%20de%20remboursement%20Plaidezy",
+    },
+    {
+      id: "autre",
+      title: "Autre demande",
+      text: "Une question, une suggestion ou un cas que vous aimeriez voir ajouté.",
     },
   ];
+
+  const [type, setType] = useState("paiement");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    setSent(false);
+    try {
+      const res = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, email, message, page: window.location.href }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Impossible d’envoyer votre message.");
+      setSent(true);
+      setMessage("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Impossible d’envoyer votre message.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -305,39 +339,95 @@ function ContactAideContent() {
       }}>
         Aide & contact
       </h1>
-      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Une question avant ou après la génération de votre lettre ?</p>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Une question avant ou après la génération de votre lettre ? Écrivez-nous directement depuis ce formulaire.</p>
 
-      <Section title="Support rapide">
-        <p>Choisissez le sujet le plus proche de votre demande pour nous envoyer un email pré-rempli.</p>
-        <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
-          {supportCards.map((card) => (
-            <a key={card.title} href={card.href} style={{
-              display: "block",
-              padding: "16px 18px",
-              borderRadius: 14,
-              border: "1px solid var(--border)",
-              background: "var(--surface)",
-              textDecoration: "none",
-              boxShadow: "var(--shadow-sm)",
-            }}>
-              <strong style={{ display: "block", color: "var(--ink)", fontSize: 14, marginBottom: 4 }}>{card.title}</strong>
-              <span style={{ display: "block", color: "var(--muted)", fontSize: 13, lineHeight: 1.55 }}>{card.text}</span>
-              <span style={{ display: "inline-block", marginTop: 10, color: "var(--green)", fontWeight: 800, fontSize: 12 }}>Écrire au support →</span>
-            </a>
-          ))}
-        </div>
-      </Section>
+      <Section title="Envoyer un message au support">
+        <form onSubmit={handleSubmit} style={{ display: "grid", gap: 16 }}>
+          <div style={{ display: "grid", gap: 12 }}>
+            {supportCards.map((card) => (
+              <button
+                key={card.id}
+                type="button"
+                onClick={() => setType(card.id)}
+                style={{
+                  display: "block",
+                  textAlign: "left",
+                  padding: "16px 18px",
+                  borderRadius: 14,
+                  border: type === card.id ? "1.5px solid var(--green)" : "1px solid var(--border)",
+                  background: type === card.id ? "var(--green-light)" : "var(--surface)",
+                  boxShadow: "var(--shadow-sm)",
+                  cursor: "pointer",
+                }}
+              >
+                <strong style={{ display: "block", color: "var(--ink)", fontSize: 14, marginBottom: 4 }}>{card.title}</strong>
+                <span style={{ display: "block", color: "var(--muted)", fontSize: 13, lineHeight: 1.55 }}>{card.text}</span>
+              </button>
+            ))}
+          </div>
 
-      <Section title="Nous contacter">
-        <p>Pour toute autre question, vous pouvez nous écrire à :</p>
-        <p style={{ marginTop: 10 }}><a href="mailto:contact@plaidezy.com" style={linkStyle}>contact@plaidezy.com</a></p>
-        <p style={{ marginTop: 10 }}>Nous faisons notre possible pour répondre sous 24h ouvrées.</p>
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--ink)", marginBottom: 6 }}>Votre email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="vous@email.com"
+              style={{
+                width: "100%",
+                border: "1.5px solid var(--border)",
+                borderRadius: 12,
+                padding: "14px 16px",
+                fontSize: 14,
+                outline: "none",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--ink)", marginBottom: 6 }}>Votre message</label>
+            <textarea
+              required
+              minLength={10}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Expliquez votre demande, votre problème ou le cas que vous souhaitez voir ajouté..."
+              rows={6}
+              style={{
+                width: "100%",
+                border: "1.5px solid var(--border)",
+                borderRadius: 12,
+                padding: "14px 16px",
+                fontSize: 14,
+                lineHeight: 1.6,
+                outline: "none",
+                resize: "vertical",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            />
+            <p style={{ marginTop: 6, fontSize: 12, color: "var(--muted)" }}>Réponse généralement sous 24h ouvrées à l’adresse indiquée.</p>
+          </div>
+
+          {error && <p style={{ color: "var(--accent)", fontSize: 13, fontWeight: 700 }}>{error}</p>}
+          {sent && <p style={{ color: "var(--green)", fontSize: 13, fontWeight: 800 }}>✓ Message envoyé. Nous vous répondrons dès que possible.</p>}
+
+          <button
+            type="submit"
+            className="wizard-btn-next"
+            disabled={submitting}
+            style={{ width: "100%", padding: "14px 20px" }}
+          >
+            {submitting ? "Envoi en cours…" : "Envoyer mon message"}
+          </button>
+        </form>
       </Section>
 
       <Section title="Questions fréquentes du support">
         <ul style={{ paddingLeft: 20 }}>
           <li><span style={strongStyle}>Je n’ai pas reçu ma lettre :</span> vérifiez que la génération est allée au bout et que votre paiement/code promo a bien été validé.</li>
-          <li><span style={strongStyle}>Le paiement a été débité mais je suis bloqué :</span> contactez-nous avec l’email utilisé et l’heure approximative du paiement.</li>
+          <li><span style={strongStyle}>Le paiement a été débité mais je suis bloqué :</span> envoyez-nous l’email utilisé et l’heure approximative du paiement.</li>
           <li><span style={strongStyle}>Puis-je modifier la lettre ?</span> Oui, la lettre est modifiable avant téléchargement PDF ou Word.</li>
           <li><span style={strongStyle}>Puis-je demander un remboursement ?</span> Oui, vous pouvez nous écrire sous 7 jours si la lettre ne correspond pas à votre situation.</li>
         </ul>

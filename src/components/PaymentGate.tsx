@@ -138,7 +138,7 @@ export default function PaymentGate({ claim, answers, amount, onPaid, onClose, o
             </div>
 
             <a
-              href={`mailto:contactplaidezy@proton.me?subject=Réclamation%20-%20Paiement`}
+              href="/aide"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 background: "var(--green)", color: "#fff", padding: "12px 24px",
