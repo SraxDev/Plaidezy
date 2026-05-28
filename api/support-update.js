@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { rateLimitSupabase } from "./_rateLimit.js";
 
+const VALID_STATUSES = ["new", "read", "closed"];
+
 function checkPassword(password) {
   const expected = process.env.SUPPORT_ADMIN_PASSWORD;
   return !!expected && typeof password === "string" && password === expected;
@@ -15,8 +17,17 @@ export default async function handler(req, res) {
   }
 
   const { password, id, status } = req.body || {};
+
+  if (!process.env.SUPPORT_ADMIN_PASSWORD) {
+    return res.status(503).json({ error: "Interface admin non configurée." });
+  }
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(503).json({ error: "Supabase non configuré pour l’espace support." });
+  }
   if (!checkPassword(password)) return res.status(401).json({ error: "Mot de passe invalide." });
-  if (!id || !["new", "read", "closed"].includes(status)) {
+
+  const numericId = Number(id);
+  if (!Number.isFinite(numericId) || numericId <= 0 || !VALID_STATUSES.includes(status)) {
     return res.status(400).json({ error: "Données invalides." });
   }
 
@@ -24,7 +35,7 @@ export default async function handler(req, res) {
   const { error } = await supabase
     .from("support_messages")
     .update({ status })
-    .eq("id", id);
+    .eq("id", numericId);
 
   if (error) {
     console.error("Support update error:", error);

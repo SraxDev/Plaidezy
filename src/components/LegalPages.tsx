@@ -492,23 +492,28 @@ type SupportMessage = {
 function SupportAdminContent() {
   const [password, setPassword] = useState(() => sessionStorage.getItem("plaidezy_support_admin") || "");
   const [messages, setMessages] = useState<SupportMessage[]>([]);
+  const [counts, setCounts] = useState({ all: 0, new: 0, read: 0, closed: 0 });
   const [status, setStatus] = useState("all");
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
-  const loadMessages = async (overrideStatus = status) => {
+  const loadMessages = async (overrideStatus = status, overrideSearch = search) => {
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/support-list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, status: overrideStatus }),
+        body: JSON.stringify({ password, status: overrideStatus, search: overrideSearch }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Impossible de charger les messages.");
       setMessages(data.messages || []);
+      setCounts(data.counts || { all: 0, new: 0, read: 0, closed: 0 });
       setAuthenticated(true);
       sessionStorage.setItem("plaidezy_support_admin", password);
     } catch (err) {
@@ -519,7 +524,14 @@ function SupportAdminContent() {
     }
   };
 
+  useEffect(() => {
+    if (password && sessionStorage.getItem("plaidezy_support_admin")) loadMessages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const updateStatus = async (id: number, nextStatus: "new" | "read" | "closed") => {
+    setUpdatingId(id);
+    setError("");
     try {
       const res = await fetch("/api/support-update", {
         method: "POST",
@@ -528,15 +540,45 @@ function SupportAdminContent() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Mise à jour impossible.");
-      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, status: nextStatus } : m));
+      await loadMessages(status, search);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Mise à jour impossible.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const logout = () => {
+    sessionStorage.removeItem("plaidezy_support_admin");
+    setPassword("");
+    setAuthenticated(false);
+    setMessages([]);
+    setCounts({ all: 0, new: 0, read: 0, closed: 0 });
+    setError("");
+  };
+
+  const copyMessage = async (msg: SupportMessage) => {
+    const content = `Message support #${msg.id}\nSujet : ${msg.type_label || msg.type}\nEmail : ${msg.email}\nDate : ${formatDate(msg.created_at)}\n\n${msg.message}`;
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(msg.id);
+      setTimeout(() => setCopiedId(null), 1600);
+    } catch {
+      setError("Impossible de copier le message automatiquement.");
     }
   };
 
   const formatDate = (date: string) => new Date(date).toLocaleString("fr-FR", {
     day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
+
+  const statusLabel = (value: string) => value === "new" ? "Nouveau" : value === "read" ? "Lu" : "Clôturé";
+  const filters = [
+    { id: "all", label: "Tous", count: counts.all },
+    { id: "new", label: "Nouveaux", count: counts.new },
+    { id: "read", label: "Lus", count: counts.read },
+    { id: "closed", label: "Clôturés", count: counts.closed },
+  ];
 
   return (
     <div>
@@ -547,66 +589,90 @@ function SupportAdminContent() {
       }}>
         Espace support
       </h1>
-      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Consultez les messages envoyés depuis le formulaire Plaidezy.</p>
+      <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 32 }}>Consultez, filtrez et traitez les messages envoyés depuis le formulaire Plaidezy.</p>
 
       <Section title="Connexion">
         <form onSubmit={(e) => { e.preventDefault(); loadMessages(); }} className="support-form">
-          <div className="support-field">
-            <label>Mot de passe support</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mot de passe admin"
-              autoComplete="current-password"
-            />
+          <div className="support-admin-login-row">
+            <div className="support-field">
+              <label>Mot de passe support</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mot de passe admin"
+                autoComplete="current-password"
+              />
+              <div className="support-field-meta">
+                <span>Conservé uniquement dans cet onglet.</span>
+              </div>
+            </div>
+            <button className="support-submit" type="submit" disabled={!password || loading}>
+              {loading ? "Chargement…" : authenticated ? "Actualiser" : "Voir les messages"}
+            </button>
           </div>
-          <button className="support-submit" type="submit" disabled={!password || loading}>
-            {loading ? "Chargement…" : authenticated ? "Actualiser les messages" : "Voir les messages"}
-          </button>
+          {authenticated && (
+            <button className="support-admin-logout" type="button" onClick={logout}>Se déconnecter</button>
+          )}
           {error && <div className="support-alert error">{error}</div>}
         </form>
       </Section>
 
       {authenticated && (
-        <Section title={`Messages (${messages.length})`}>
-          <div className="support-admin-toolbar">
-            {["all", "new", "read", "closed"].map((s) => (
+        <>
+          <div className="support-admin-stats">
+            {filters.map((filter) => (
               <button
-                key={s}
-                className={status === s ? "active" : ""}
+                key={filter.id}
+                className={status === filter.id ? "active" : ""}
                 type="button"
-                onClick={() => { setStatus(s); loadMessages(s); }}
+                onClick={() => { setStatus(filter.id); loadMessages(filter.id, search); }}
               >
-                {s === "all" ? "Tous" : s === "new" ? "Nouveaux" : s === "read" ? "Lus" : "Clôturés"}
+                <strong>{filter.count}</strong>
+                <span>{filter.label}</span>
               </button>
             ))}
           </div>
 
-          <div className="support-admin-list">
-            {messages.length === 0 ? (
-              <p style={{ color: "var(--muted)", fontSize: 14 }}>Aucun message pour ce filtre.</p>
-            ) : messages.map((msg) => (
-              <article className={`support-admin-card status-${msg.status}`} key={msg.id}>
-                <div className="support-admin-card-head">
-                  <div>
-                    <strong>#{msg.id} · {msg.type_label || msg.type}</strong>
-                    <span>{formatDate(msg.created_at)}</span>
+          <Section title="Messages support">
+            <div className="support-admin-search-row">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher par email, message ou sujet..."
+              />
+              <button type="button" onClick={() => loadMessages(status, search)} disabled={loading}>Rechercher</button>
+            </div>
+
+            <div className="support-admin-list">
+              {loading ? (
+                <div className="support-admin-empty">Chargement des messages…</div>
+              ) : messages.length === 0 ? (
+                <div className="support-admin-empty">Aucun message pour ce filtre.</div>
+              ) : messages.map((msg) => (
+                <article className={`support-admin-card status-${msg.status}`} key={msg.id}>
+                  <div className="support-admin-card-head">
+                    <div>
+                      <strong>#{msg.id} · {msg.type_label || msg.type}</strong>
+                      <span>{formatDate(msg.created_at)}</span>
+                    </div>
+                    <span className="support-admin-status">{statusLabel(msg.status)}</span>
                   </div>
-                  <span className="support-admin-status">{msg.status === "new" ? "Nouveau" : msg.status === "read" ? "Lu" : "Clôturé"}</span>
-                </div>
-                <a href={`mailto:${msg.email}`} className="support-admin-email">{msg.email}</a>
-                <p>{msg.message}</p>
-                {msg.page && <small>Page : {msg.page}</small>}
-                <div className="support-admin-actions">
-                  <a href={`mailto:${msg.email}?subject=Re:%20Support%20Plaidezy%20%23${msg.id}`}>Répondre</a>
-                  <button type="button" onClick={() => updateStatus(msg.id, "read")}>Marquer lu</button>
-                  <button type="button" onClick={() => updateStatus(msg.id, "closed")}>Clôturer</button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </Section>
+                  <a href={`mailto:${msg.email}`} className="support-admin-email">{msg.email}</a>
+                  <p>{msg.message}</p>
+                  {msg.page && <small>Page : {msg.page}</small>}
+                  <div className="support-admin-actions">
+                    <a href={`mailto:${msg.email}?subject=Re:%20Support%20Plaidezy%20%23${msg.id}`}>Répondre</a>
+                    <button type="button" onClick={() => copyMessage(msg)}>{copiedId === msg.id ? "✓ Copié" : "Copier"}</button>
+                    {msg.status !== "new" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "new")}>Remettre nouveau</button>}
+                    {msg.status !== "read" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "read")}>Marquer lu</button>}
+                    {msg.status !== "closed" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "closed")}>Clôturer</button>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </Section>
+        </>
       )}
     </div>
   );
