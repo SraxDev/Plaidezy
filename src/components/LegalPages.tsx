@@ -498,6 +498,7 @@ function SupportAdminContent() {
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
@@ -511,13 +512,18 @@ function SupportAdminContent() {
         body: JSON.stringify({ password, status: overrideStatus, search: overrideSearch }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Impossible de charger les messages.");
+      if (!res.ok) {
+        if (res.status === 401) {
+          sessionStorage.removeItem("plaidezy_support_admin");
+          setAuthenticated(false);
+        }
+        throw new Error(data.error || "Impossible de charger les messages.");
+      }
       setMessages(data.messages || []);
       setCounts(data.counts || { all: 0, new: 0, read: 0, closed: 0 });
       setAuthenticated(true);
       sessionStorage.setItem("plaidezy_support_admin", password);
     } catch (err) {
-      setAuthenticated(false);
       setError(err instanceof Error ? err.message : "Erreur de chargement.");
     } finally {
       setLoading(false);
@@ -530,8 +536,18 @@ function SupportAdminContent() {
   }, []);
 
   const updateStatus = async (id: number, nextStatus: "new" | "read" | "closed") => {
+    const previousMessages = messages;
+    const target = messages.find((m) => m.id === id);
     setUpdatingId(id);
     setError("");
+    setNotice("");
+
+    // Mise à jour optimiste pour que l'action soit immédiatement visible.
+    setMessages((prev) => prev
+      .map((m) => m.id === id ? { ...m, status: nextStatus } : m)
+      .filter((m) => status === "all" || m.status === status)
+    );
+
     try {
       const res = await fetch("/api/support-update", {
         method: "POST",
@@ -540,11 +556,15 @@ function SupportAdminContent() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Mise à jour impossible.");
+
+      setNotice(`Message #${id} ${nextStatus === "closed" ? "clôturé" : nextStatus === "read" ? "marqué comme lu" : "remis en nouveau"}.`);
       await loadMessages(status, search);
     } catch (err) {
+      setMessages(previousMessages);
       setError(err instanceof Error ? err.message : "Mise à jour impossible.");
     } finally {
       setUpdatingId(null);
+      if (target) setTimeout(() => setNotice(""), 2600);
     }
   };
 
@@ -555,6 +575,7 @@ function SupportAdminContent() {
     setMessages([]);
     setCounts({ all: 0, new: 0, read: 0, closed: 0 });
     setError("");
+    setNotice("");
   };
 
   const copyMessage = async (msg: SupportMessage) => {
@@ -615,6 +636,7 @@ function SupportAdminContent() {
             <button className="support-admin-logout" type="button" onClick={logout}>Se déconnecter</button>
           )}
           {error && <div className="support-alert error">{error}</div>}
+          {notice && <div className="support-alert success">✓ {notice}</div>}
         </form>
       </Section>
 
@@ -644,6 +666,7 @@ function SupportAdminContent() {
               <button type="button" onClick={() => loadMessages(status, search)} disabled={loading}>Rechercher</button>
             </div>
 
+            {notice && <div className="support-alert success">✓ {notice}</div>}
             <div className="support-admin-list">
               {loading ? (
                 <div className="support-admin-empty">Chargement des messages…</div>
@@ -664,9 +687,9 @@ function SupportAdminContent() {
                   <div className="support-admin-actions">
                     <a href={`mailto:${msg.email}?subject=Re:%20Support%20Plaidezy%20%23${msg.id}`}>Répondre</a>
                     <button type="button" onClick={() => copyMessage(msg)}>{copiedId === msg.id ? "✓ Copié" : "Copier"}</button>
-                    {msg.status !== "new" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "new")}>Remettre nouveau</button>}
-                    {msg.status !== "read" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "read")}>Marquer lu</button>}
-                    {msg.status !== "closed" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "closed")}>Clôturer</button>}
+                    {msg.status !== "new" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "new")}>{updatingId === msg.id ? "..." : "Remettre nouveau"}</button>}
+                    {msg.status !== "read" && <button type="button" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "read")}>{updatingId === msg.id ? "..." : "Marquer lu"}</button>}
+                    {msg.status !== "closed" && <button type="button" className="danger-soft" disabled={updatingId === msg.id} onClick={() => updateStatus(msg.id, "closed")}>{updatingId === msg.id ? "Clôture..." : "Clôturer"}</button>}
                   </div>
                 </article>
               ))}

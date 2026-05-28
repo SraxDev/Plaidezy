@@ -5207,3 +5207,22 @@ footer .footer-rich {
     grid-template-columns: 1fr;
   }
 }
+
+/* Support admin: clarté des actions */
+.support-admin-actions button.danger-soft {
+  background: #FEE2E2;
+  color: var(--accent-rose);
+  border-color: rgba(244, 63, 94, 0.18);
+}
+.support-admin-actions button.danger-soft:hover:not(:disabled) {
+  background: #FFE4E6;
+  color: #BE123C;
+  border-color: rgba(244, 63, 94, 0.28);
+}
+.support-admin-card.status-closed {
+  opacity: 0.82;
+}
+.support-admin-card.status-closed .support-admin-status {
+  background: var(--bg-secondary);
+  color: var(--text-muted) !important;
+}

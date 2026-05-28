@@ -32,15 +32,21 @@ export default async function handler(req, res) {
   }
 
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("support_messages")
     .update({ status })
-    .eq("id", numericId);
+    .eq("id", numericId)
+    .select("id,status")
+    .maybeSingle();
 
   if (error) {
     console.error("Support update error:", error);
     return res.status(500).json({ error: "Impossible de mettre à jour le message." });
   }
 
-  return res.json({ ok: true });
+  if (!data) {
+    return res.status(404).json({ error: "Message introuvable." });
+  }
+
+  return res.json({ ok: true, message: data });
 }
