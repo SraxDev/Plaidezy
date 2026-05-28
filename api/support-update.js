@@ -2,10 +2,24 @@ import { createClient } from "@supabase/supabase-js";
 import { rateLimitSupabase } from "./_rateLimit.js";
 
 const VALID_STATUSES = ["new", "read", "closed"];
+const VALID_PRIORITIES = ["low", "normal", "high", "urgent"];
 
 function checkPassword(password) {
   const expected = process.env.SUPPORT_ADMIN_PASSWORD;
   return !!expected && typeof password === "string" && password === expected;
+}
+
+function clean(value, max = 4000) {
+  return String(value || "")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function isMissingColumnError(error) {
+  const msg = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  return msg.includes("column") && (msg.includes("priority") || msg.includes("admin_note") || msg.includes("updated_at"));
 }
 
 export default async function handler(req, res) {
@@ -16,7 +30,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: "Trop de requêtes." });
   }
 
-  const { password, id, status } = req.body || {};
+  const { password, id, status, priority, adminNote } = req.body || {};
 
   if (!process.env.SUPPORT_ADMIN_PASSWORD) {
     return res.status(503).json({ error: "Interface admin non configurée." });
@@ -27,26 +41,56 @@ export default async function handler(req, res) {
   if (!checkPassword(password)) return res.status(401).json({ error: "Mot de passe invalide." });
 
   const numericId = Number(id);
-  if (!Number.isFinite(numericId) || numericId <= 0 || !VALID_STATUSES.includes(status)) {
-    return res.status(400).json({ error: "Données invalides." });
+  if (!Number.isFinite(numericId) || numericId <= 0) {
+    return res.status(400).json({ error: "Message invalide." });
   }
 
+  const update = {};
+  if (status !== undefined) {
+    if (!VALID_STATUSES.includes(status)) return res.status(400).json({ error: "Statut invalide." });
+    update.status = status;
+  }
+  if (priority !== undefined) {
+    if (!VALID_PRIORITIES.includes(priority)) return res.status(400).json({ error: "Priorité invalide." });
+    update.priority = priority;
+  }
+  if (adminNote !== undefined) update.admin_note = clean(adminNote, 2000);
+
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ error: "Aucune modification demandée." });
+  }
+
+  const updateWithTimestamp = { ...update, updated_at: new Date().toISOString() };
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const { data, error } = await supabase
+
+  let result = await supabase
     .from("support_messages")
-    .update({ status })
+    .update(updateWithTimestamp)
     .eq("id", numericId)
-    .select("id,status")
+    .select("id,status,priority,admin_note")
     .maybeSingle();
 
-  if (error) {
-    console.error("Support update error:", error);
+  if (result.error && isMissingColumnError(result.error)) {
+    const statusOnly = update.status ? { status: update.status } : null;
+    if (!statusOnly) {
+      return res.status(400).json({ error: "Migration Supabase manquante : ajoutez priority/admin_note/updated_at à support_messages." });
+    }
+    result = await supabase
+      .from("support_messages")
+      .update(statusOnly)
+      .eq("id", numericId)
+      .select("id,status")
+      .maybeSingle();
+  }
+
+  if (result.error) {
+    console.error("Support update error:", result.error);
     return res.status(500).json({ error: "Impossible de mettre à jour le message." });
   }
 
-  if (!data) {
+  if (!result.data) {
     return res.status(404).json({ error: "Message introuvable." });
   }
 
-  return res.json({ ok: true, message: data });
+  return res.json({ ok: true, message: result.data });
 }

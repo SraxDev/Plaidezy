@@ -486,6 +486,9 @@ type SupportMessage = {
   page?: string;
   user_agent?: string;
   status: "new" | "read" | "closed";
+  priority?: "low" | "normal" | "high" | "urgent";
+  admin_note?: string;
+  updated_at?: string;
   created_at: string;
 };
 
@@ -535,16 +538,20 @@ function SupportAdminContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const updateStatus = async (id: number, nextStatus: "new" | "read" | "closed") => {
+  const updateMessage = async (id: number, changes: { status?: "new" | "read" | "closed"; priority?: "low" | "normal" | "high" | "urgent"; adminNote?: string }, successLabel = "Message mis à jour") => {
     const previousMessages = messages;
     const target = messages.find((m) => m.id === id);
     setUpdatingId(id);
     setError("");
     setNotice("");
 
-    // Mise à jour optimiste pour que l'action soit immédiatement visible.
     setMessages((prev) => prev
-      .map((m) => m.id === id ? { ...m, status: nextStatus } : m)
+      .map((m) => m.id === id ? {
+        ...m,
+        ...(changes.status ? { status: changes.status } : {}),
+        ...(changes.priority ? { priority: changes.priority } : {}),
+        ...(changes.adminNote !== undefined ? { admin_note: changes.adminNote } : {}),
+      } : m)
       .filter((m) => status === "all" || m.status === status)
     );
 
@@ -552,12 +559,12 @@ function SupportAdminContent() {
       const res = await fetch("/api/support-update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, id, status: nextStatus }),
+        body: JSON.stringify({ password, id, ...changes }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Mise à jour impossible.");
 
-      setNotice(`Message #${id} ${nextStatus === "closed" ? "clôturé" : nextStatus === "read" ? "marqué comme lu" : "remis en nouveau"}.`);
+      setNotice(successLabel);
       await loadMessages(status, search);
     } catch (err) {
       setMessages(previousMessages);
@@ -566,6 +573,14 @@ function SupportAdminContent() {
       setUpdatingId(null);
       if (target) setTimeout(() => setNotice(""), 2600);
     }
+  };
+
+  const updateStatus = async (id: number, nextStatus: "new" | "read" | "closed") => {
+    await updateMessage(
+      id,
+      { status: nextStatus },
+      `Message #${id} ${nextStatus === "closed" ? "clôturé" : nextStatus === "read" ? "marqué comme lu" : "remis en nouveau"}.`
+    );
   };
 
   const logout = () => {
@@ -594,6 +609,13 @@ function SupportAdminContent() {
   });
 
   const statusLabel = (value: string) => value === "new" ? "Nouveau" : value === "read" ? "Lu" : "Clôturé";
+  const priorityLabel = (value = "normal") => value === "urgent" ? "Urgent" : value === "high" ? "Haute" : value === "low" ? "Basse" : "Normale";
+  const priorityOptions = [
+    { value: "low", label: "Basse" },
+    { value: "normal", label: "Normale" },
+    { value: "high", label: "Haute" },
+    { value: "urgent", label: "Urgente" },
+  ] as const;
   const filters = [
     { id: "all", label: "Tous", count: counts.all },
     { id: "new", label: "Nouveaux", count: counts.new },
@@ -679,11 +701,48 @@ function SupportAdminContent() {
                       <strong>#{msg.id} · {msg.type_label || msg.type}</strong>
                       <span>{formatDate(msg.created_at)}</span>
                     </div>
-                    <span className="support-admin-status">{statusLabel(msg.status)}</span>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <span className={`support-admin-priority priority-${msg.priority || "normal"}`}>{priorityLabel(msg.priority)}</span>
+                      <span className="support-admin-status">{statusLabel(msg.status)}</span>
+                    </div>
                   </div>
                   <a href={`mailto:${msg.email}`} className="support-admin-email">{msg.email}</a>
                   <p>{msg.message}</p>
                   {msg.page && <small>Page : {msg.page}</small>}
+
+                  <div className="support-admin-meta-grid">
+                    <label>
+                      Priorité
+                      <select
+                        value={msg.priority || "normal"}
+                        disabled={updatingId === msg.id}
+                        onChange={(e) => updateMessage(msg.id, { priority: e.target.value as "low" | "normal" | "high" | "urgent" }, `Priorité du message #${msg.id} mise à jour.`)}
+                      >
+                        {priorityOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Note interne
+                      <textarea
+                        value={msg.admin_note || ""}
+                        placeholder="Ajouter une note visible uniquement par vous..."
+                        onChange={(e) => {
+                          const note = e.target.value;
+                          setMessages((prev) => prev.map((m) => m.id === msg.id ? { ...m, admin_note: note } : m));
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={updatingId === msg.id}
+                      onClick={() => updateMessage(msg.id, { adminNote: msg.admin_note || "" }, `Note du message #${msg.id} sauvegardée.`)}
+                    >
+                      Sauvegarder la note
+                    </button>
+                  </div>
+
                   <div className="support-admin-actions">
                     <a href={`mailto:${msg.email}?subject=Re:%20Support%20Plaidezy%20%23${msg.id}`}>Répondre</a>
                     <button type="button" onClick={() => copyMessage(msg)}>{copiedId === msg.id ? "✓ Copié" : "Copier"}</button>

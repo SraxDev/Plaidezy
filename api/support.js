@@ -18,6 +18,17 @@ function clean(value, max = 4000) {
     .slice(0, max);
 }
 
+function defaultPriority(type) {
+  if (type === "paiement" || type === "remboursement") return "high";
+  if (type === "lettre") return "normal";
+  return "low";
+}
+
+function isMissingColumnError(error) {
+  const msg = `${error?.message || ""} ${error?.details || ""}`.toLowerCase();
+  return msg.includes("column") && (msg.includes("priority") || msg.includes("admin_note") || msg.includes("updated_at"));
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -48,24 +59,34 @@ export default async function handler(req, res) {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  const { data, error } = await supabase
+  const basePayload = {
+    email,
+    type,
+    type_label: typeLabel,
+    message,
+    page,
+    user_agent: userAgent,
+    ip,
+  };
+
+  let result = await supabase
     .from("support_messages")
-    .insert({
-      email,
-      type,
-      type_label: typeLabel,
-      message,
-      page,
-      user_agent: userAgent,
-      ip,
-    })
+    .insert({ ...basePayload, priority: defaultPriority(type) })
     .select("id")
     .maybeSingle();
 
-  if (error) {
-    console.error("Support insert error:", error);
+  if (result.error && isMissingColumnError(result.error)) {
+    result = await supabase
+      .from("support_messages")
+      .insert(basePayload)
+      .select("id")
+      .maybeSingle();
+  }
+
+  if (result.error) {
+    console.error("Support insert error:", result.error);
     return res.status(500).json({ error: "Impossible d’enregistrer votre message. Réessayez dans quelques instants." });
   }
 
-  return res.json({ ok: true, supportId: data?.id || null });
+  return res.json({ ok: true, supportId: result.data?.id || null });
 }
